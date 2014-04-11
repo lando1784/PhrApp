@@ -272,13 +272,15 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
         
     currIter = 0
     
-    
-    
     x = range(N)
     
     propList = x[(len(x)-1)/2:len(x)]+x[-2:-1*(len(x)+1):-1]+x[1:(len(x)-1)/2+1]
     
-    deltas = [x*dz for x in propList]
+    deltas = [(x-(N-1)/2)*dz for x in propList]
+    
+    print dict(zip(propList,deltas))
+    
+    print propList
     
     err = bf.np.sum(images[(N-1)/2])**2
     
@@ -287,21 +289,33 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
     while err > errLim and currIter < iterLim:
         
         for ind in range(len(propList)-1):
-            csiKcorr = bf.np.multiply(sqrtImgs[propList[ind]],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
-            FcsiKcorr = fft.ifft2(fft.ifftshift(csiKcorr))
-            #delta = dz if propList[ind]<propList[ind+1] else -1*dz
-            delta = deltas[ind]
+            csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
+            FcsiK = fft.fft2(fft.fftshift(csiK))
+            delta = deltas[ind+1]
             coeffExp = bf.np.exp((i*delta/(2*k))*kpq)
-            FcsiKp1 = bf.np.multiply(coeffExp,FcsiKcorr)
+            FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
             csiKp1 = fft.ifft2(fft.ifftshift(FcsiKp1))
             csiKp1I = bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)
             err = bf.np.sum(bf.np.square(csiKp1I-images[propList[ind+1]]))
+            
             print err
-            print propList[ind]
-            phiGuess = bf.np.arctan2(csiKp1.imag,csiKp1.real)
+            
+            if err > errLim:
+                csiKp1cR = sqrtImgs[propList[ind+1]]
+                csiKp1cP = bf.np.arctan2(csiKp1.imag,csiKp1.real)
+                csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1cP) + bf.np.sin(csiKp1cP)*1j))
+                FcsiKp1c = fft.fft2(fft.fftshift(csiKp1c))
+                FcsiKc = bf.np.divide(FcsiKp1c,coeffExp)
+                csiKc = fft.ifft2(fft.ifftshift(FcsiKc))
+                phiGuess = bf.np.arctan2(csiKc.imag,csiKc.real)
+            else:
+                pass
+            print ind
         
         currIter += 1
         
+    print phiGuess.dtype
+    
     return phiGuess
 
 

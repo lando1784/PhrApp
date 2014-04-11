@@ -339,10 +339,10 @@ class MainFrame(wx.Frame):
                     phaseGuess = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample, onlyAguess = True)
                 else:
                     phaseGuess = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample, onlyAguess = True)
-                self.res3Dimage = qpm.AI(self.images,zN,deltaX,kN,phaseGuess,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
+                self.res3Dimage = bf.adjustImgRange(qpm.AI(self.images,zN,deltaX,kN,phaseGuess,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue())),2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
             else:
-                self.res3Dimage = qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
+                self.res3Dimage = bf.adjustImgRange(qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue())),(2**self.BitsPerSample-1)).astype(bf.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
         
         print pixelToRad
@@ -365,13 +365,22 @@ class MainFrame(wx.Frame):
         comment = str('Pixel to nm: ' + str(self.radToHeight) + '\ndX: ' + self.xStepNum.GetValue() + '\ndZ: ' + self.zStepNum.GetValue() + '\nnSample: ' + self.nSampleNum.GetValue() + '\nnMedium: ' + 
                    self.nMedNum.GetValue() + '\nAlpha function: ' + self.alphaFuncCbBox.GetValue() + '\nAlpha 1: ' + self.alphaNum.GetValue() + '\nAlpha 2: ' + self.alphaNum2.GetValue() + '\nImg num: ' + str(len(self.images)) + '\nFocus index: ' + str(self.bestFocusIndex) + '\nPolyFit Der: ' +
                    str(polyfitDer) + '\nWavelength: ' + self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
-        paramsSet = [[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
+        paramsSet = ([[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
                      [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
                      [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],
                      [path3D,''],
                      [path3D,''],
                      [path3D,comment]
                      ]
+                     if self.BitsPerSample == 16 else
+                     [[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
+                     [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
+                     [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample])],
+                     [path3D,''],
+                     [path3D,''],
+                     [path3D,comment]
+                     ])
+        
         
         
         #bf.sp.misc.imsave(*paramsSet[self.fileExtCbBox.GetSelection()])
