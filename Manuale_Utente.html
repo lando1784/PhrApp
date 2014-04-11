@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<head>
+	<title>QPM-GUI Manuale utente</title>
+	<meta name="viewport" content="width=device-width, initial-scale=1.0" charset="utf-8">
+</head>
+<body>
+	<div id="titolo">
+		<br>
+		<h1>QMP-GUI: Manuale utente</h1>
+		<br>
+		<br>
+		<hr>
+		<br>
+		<h2>Versione 0.5</h2>
+		<br>
+		<hr>
+		<br>
+		<br>
+	</div>
+	<div id="sommario">
+		<h2>Sommario</h2>
+		<ol>
+			<li id="uno"><a href="#cap1">
+					<h4>Installazione e esecuzione</h4>
+				</a></li>
+			<li id="due">
+				<a href="#cap2">
+					<h4>Apertura file</h4></a>
+				<ol type="a">
+					<li id="dueA"><a href="#cap2A">
+							<h5>Gruppo di file .tif</h5>
+						</a></li>
+					<li id="dueB"><a href="#cap2B">
+							<h5>File nd2</h5>
+						</a></li>
+				</ol>
+			</li>
+			<li id="tre"><a href="#cap3">
+					<h4>Impostazioni iniziali</h4>
+				</a></li>
+			<li id="quattro"><a href="#cap4">
+					<h4>Creazione e salvataggio immagine 3D</h4>
+				</a></li>
+		</ol>
+	</div>
+	<br>
+	<br>
+	<div id="capitoli">
+		<div id="cap1">
+			<h2>1. Installazione ed esecuzione</h2>
+			<p>
+				Disinstallare qualunque distribuzione di Python già presente di Python (se non si ha dimestichezza con l'installazione dei pacchetti). 
+				Scaricare quindi Python XY (<a href="https://code.google.com/p/pythonxy/wiki/Downloads#Current_release">python XY</a>) e seguire le instruzioni fornite dal sito degli sviluppatori.<br><br>
+				<em><strong>Attenzione: Solo per utenti Windows</strong></em><br><br>Fatto ciò aprire un prompt dei comandi, su windows (<em>"tasto windows"+r</em>, digitare "cmd" e premere Invio), o un terminale, su Linux, e 
+				digitare "easy_install <em>nome_pacchetto</em>", dove a <em>nome_pacchetto</em> vanno sostituiti, nell'ordine, i seguenti nomi:
+				<ol>
+					<li>
+						<p>sendkeys</p>
+					</li>
+					<li>
+						<p>ctypes</p>
+					</li>
+				</ol>
+				A questo punto, bisogna scaricare PyWinAuto (<a href="https://code.google.com/p/pywinauto/downloads/detail?name=pywinauto-0.4.2.zip">Scarica PyWinAuto</a>). Estrarre quindi la cartella 
+				nel file .zip, aprire un prompt dei comandi, entrare nella cartella appena estratta e digitare "python setup.py install".
+				
+				Terminato il procedimento di installazione, aprire la cartella di QPM-python e fare doppio click su "QPM-GUI.py"
+			</p>
+			<a href="#sommario">
+				<h4>Torna al sommario</h4></a>
+		</div>
+		<br>
+		<br>
+		<div id="cap2">
+			<h2>2. Apertura file</h2>
+			<br>
+			<h3 id="cap2A">Gruppi di file .tif</h3>
+			<p>
+				Cliccare sul menù "File" o premere <em>Atl+f</em> e scegliere "Open". Cercare la cartella con le immagini e selezionare quelle da utilizzare.
+			</p>
+			<br>
+			<h3 id="cap2B">File nd2</h3>
+			<p>
+				<em><strong>Attenzione: Solo per utenti Windows</strong></em><br>Se avete installato "NIS Element Viewer" di Nikon (<a href="http://www.nikoninst.com/downloads/PC-NIS_Viewer_4.20_b972.zip">Download</a>),
+				Aprire il menù "File" e selezionare "Open Nd2". Selezionare, quindi, il file e, successivamente, la cartella in cui salvare i file tif esportati dal file .nd2. Una volta scelta la cartella,
+				il programma eseguirà in maniera automatica "NIS Element Viewer" ed esporterà i .tif nella cartella selezionata. Fino a che l'operazione non sarà terminata (ovvero quando verrà richiuso il software Nikon) 
+				si prega di non interagire con il pc. Questo perchè andreste a disturbare il funzionamento dello script che controlla il programma Nikon.
+			</p>
+			<a href="#sommario">
+				<h4>Torna al sommario</h4></a>
+		</div>
+		<br>
+		<br>
+		<div id="cap3">
+			<h2>3. Impostazioni iniziali</h2>
+			<p>
+				Una volta caricate le immagini, si potrà impostare l'immagine con il fuoco migliore. Per farlo, si possono scorrere le immagini usando la barra di scorrimento sotto al visualizzatore o usando 
+				il menù a tendina che ne riporta i path e decidere autonomamente quale sia la migliore, cliccando sulla Checkbox posta di fianco alla barra di scorrimento. Altrimenti, si può affidare al software
+				il compito di sceglierla, cliccando sul radio button "Autofocus". Cliccando nuovamente sul checkbox relativo ad una immagine diversa da quella scelta dal software, sposterà la selezione del radio button
+				su "Manual".
+				Si può inoltre impostare il parametro "Alpha corrector" usato nel calcolo di ricostruzione dell'immagine (<em>Spiegazione omissis per il momento</em>). I valori consigliati rimangono nel 
+				range 10<sup>-6</sup> a 10<sup>-2</sup>.
+				Va poi impostato il passo tra le immagini in nanometri.
+			</p>
+			<a href="#sommario">
+				<h4>Torna al sommario</h4></a>
+		</div>
+		<br>
+		<br>
+		<div id="cap4">
+			<h2>4. Creazione e salvataggio immagini 3D</h2>
+			<p>
+				Terminate le impostazioni iniziali, si può passare alla creazione dell'immagine 3D. Cliccando su "Create 3D Image" partirà l'algoritmo di ricostruzione. Una volta terminato, sarà possibile visualizzare
+				il risultato cliccando su "View 3D Image". Verranno quindi aperte due finestre, una con il risultato visto in due dimensioni e un render in 3D navigabile del risultato. Nel caso il risultato sia
+				quello atteso, si potrà procedere a salvare l'immagine cliccando su "Save 3D Image". Prima di salvare vanno impostati il nome del file e l'estensione (selezionabile dall'apposito menù a tendina) e la 
+				cartella, che di default è quella che da cui sono state caricate le immagini (per cambiare directory, basta cliccare sul pulsante "..."). 
+			</p>
+			<a href="#sommario">
+				<h4>Torna al sommario</h4></a>
+		</div>
+	</div>
+</body>
