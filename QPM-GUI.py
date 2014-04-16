@@ -365,6 +365,8 @@ class MainFrame(wx.Frame):
         comment = str('Pixel to nm: ' + str(self.radToHeight) + '\ndX: ' + self.xStepNum.GetValue() + '\ndZ: ' + self.zStepNum.GetValue() + '\nnSample: ' + self.nSampleNum.GetValue() + '\nnMedium: ' + 
                    self.nMedNum.GetValue() + '\nAlpha function: ' + self.alphaFuncCbBox.GetValue() + '\nAlpha 1: ' + self.alphaNum.GetValue() + '\nAlpha 2: ' + self.alphaNum2.GetValue() + '\nImg num: ' + str(len(self.images)) + '\nFocus index: ' + str(self.bestFocusIndex) + '\nPolyFit Der: ' +
                    str(polyfitDer) + '\nWavelength: ' + self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
+        if self.algCbBox.GetSelection() != 0:
+            comment = comment+str('\nMax iter num: ' + self.iterLimNum.GetValue() + '\nMaxError: ' + self.errLimNum.GetValue())
         paramsSet = ([[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
                      [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
                      [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],

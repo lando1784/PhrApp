@@ -284,15 +284,13 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
     
     err = bf.np.sum(images[(N-1)/2])**2
     
-    i = -1j
-    
     while err > errLim and currIter < iterLim:
         
         for ind in range(len(propList)-1):
             csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
             FcsiK = fft.fft2(fft.fftshift(csiK))
             delta = deltas[ind+1]
-            coeffExp = bf.np.exp((i*delta/(2*k))*kpq)
+            coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
             FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
             csiKp1 = fft.ifft2(fft.ifftshift(FcsiKp1))
             csiKp1I = bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)
@@ -313,8 +311,6 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
             print ind
         
         currIter += 1
-        
-    print phiGuess.dtype
     
     return phiGuess
 
