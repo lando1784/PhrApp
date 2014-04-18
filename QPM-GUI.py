@@ -20,6 +20,7 @@ else:
 import time # di sistema
 from subprocess import Popen #di sistema
 from wx import Point
+import csv
 
 #matplotlib.interactive( True )
 #matplotlib.use('WXAgg')
@@ -339,10 +340,12 @@ class MainFrame(wx.Frame):
                     phaseGuess = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample, onlyAguess = True)
                 else:
                     phaseGuess = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample, onlyAguess = True)
-                self.res3Dimage = bf.adjustImgRange(qpm.AI(self.images,zN,deltaX,kN,phaseGuess,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue())),2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
+                temp, self.errList = qpm.AI(self.images,zN,deltaX,kN,phaseGuess,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
+                self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
             else:
-                self.res3Dimage = bf.adjustImgRange(qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue())),(2**self.BitsPerSample-1)).astype(bf.imgTypes[self.BitsPerSample])
+                temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
+                self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
         
         print pixelToRad
@@ -388,6 +391,13 @@ class MainFrame(wx.Frame):
         #bf.sp.misc.imsave(*paramsSet[self.fileExtCbBox.GetSelection()])
         img = bf.Image.fromarray(*paramsSet[self.fileExtCbBox.GetSelection()])
         img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
+        
+        if self.algCbBox.GetSelection() != 0:
+            errFile = open(self.resImgDirTxt.GetValue()+'\\'+self.resImgFileNameTxt.GetValue()+'err.csv','w')
+            errWrt = csv.writer(errFile,delimiter='\t')
+            for e in self.errList:
+                errWrt.writerow(str(e))
+            
         
         
     def onView3D(self, event):

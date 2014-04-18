@@ -243,6 +243,26 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
         return realSum
         
 
+def propagateI(csiK, kpq, delta, k):
+    
+    FcsiK = fft.fft2(fft.fftshift(csiK))
+    coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
+    FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
+    csiKp1 = fft.ifft2(fft.ifftshift(FcsiKp1))
+    
+    return csiKp1
+
+
+def propagateBack(csiKp1c, kpq, delta, k):
+    
+    coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
+    FcsiKp1c = fft.fft2(fft.fftshift(csiKp1c))
+    FcsiKc = bf.np.divide(FcsiKp1c,coeffExp)
+    csiKc = fft.ifft2(fft.ifftshift(FcsiKc))
+    phiGuess = bf.np.arctan2(csiKc.imag,csiKc.real)
+    
+    return phiGuess
+
 
 def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterLim = 20):
     
@@ -260,8 +280,8 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
     
     kpq = bf.np.square(kx) + bf.np.square(ky) 
     
-    if N%2 == 0:
-        return []
+#    if N%2 == 0:
+#        return []
     
     sqrtImgs = bf.np.sqrt(images)
     
@@ -276,43 +296,50 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
     
     propList = x[(len(x)-1)/2:len(x)]+x[-2:-1*(len(x)+1):-1]+x[1:(len(x)-1)/2+1]
     
-    deltas = [(x-(N-1)/2)*dz for x in propList]
-    
-    print dict(zip(propList,deltas))
-    
     print propList
     
+    deltas = [(x-(N-1)/2)*dz for x in propList]
+    
     err = bf.np.sum(images[(N-1)/2])**2
+    csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
+    errList = []
     
     while err > errLim and currIter < iterLim:
         
         for ind in range(len(propList)-1):
-            csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
-            FcsiK = fft.fft2(fft.fftshift(csiK))
-            delta = deltas[ind+1]
-            coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
-            FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
-            csiKp1 = fft.ifft2(fft.ifftshift(FcsiKp1))
+            #csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
+            #delta = deltas[ind+1]
+            delta = dz if propList[ind] < propList[ind+1] else -1*dz
+            csiKp1 = propagateI(csiK,kpq,delta,k)
             csiKp1I = bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)
-            err = bf.np.sum(bf.np.square(csiKp1I-images[propList[ind+1]]))
-            
-            print err
-            
-            if err > errLim:
-                csiKp1cR = sqrtImgs[propList[ind+1]]
-                csiKp1cP = bf.np.arctan2(csiKp1.imag,csiKp1.real)
-                csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1cP) + bf.np.sin(csiKp1cP)*1j))
-                FcsiKp1c = fft.fft2(fft.fftshift(csiKp1c))
-                FcsiKc = bf.np.divide(FcsiKp1c,coeffExp)
-                csiKc = fft.ifft2(fft.ifftshift(FcsiKc))
-                phiGuess = bf.np.arctan2(csiKc.imag,csiKc.real)
+            csiKp1P = bf.np.arctan2(csiKp1.imag,csiKp1.real)
+            if bf.np.equal(csiKp1I,images[propList[ind+1]]).all is False:
+                csiK = bf.np.multiply(sqrtImgs[propList[ind+1]],(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j))
             else:
-                pass
-            print ind
+                csiK = csiKp1
+            #err = bf.np.sum(bf.np.square(csiKp1I-images[propList[ind+1]]))
+            
+            #print 'err: '
+            #print err
+            
+            #if err > errLim:
+            #    csiKp1cR = sqrtImgs[propList[ind+1]]
+            #    csiKp1cP = bf.np.arctan2(csiKp1.imag,csiKp1.real)
+            #    csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1cP) + bf.np.sin(csiKp1cP)*1j))
+            #    phiGuess = propagateBack(csiKp1c, kpq, delta, k)
+                
+            #else:
+            #    pass
         
+        err = bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]]))
+        errList.append(err)
         currIter += 1
+        print currIter
+        print err
     
-    return phiGuess
+    phiGuess = bf.np.arctan2(csiK.imag,csiK.real)
+    
+    return phiGuess, errList
 
 
 if __name__== '__main__':
