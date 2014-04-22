@@ -245,10 +245,10 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
 
 def propagateI(csiK, kpq, delta, k):
     
-    FcsiK = fft.fft2(fft.fftshift(csiK))
+    FcsiK = fft.fft2(csiK)#fft.fftshift(csiK))
     coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
     FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
-    csiKp1 = fft.ifft2(fft.ifftshift(FcsiKp1))
+    csiKp1 = fft.ifft2(FcsiKp1)#fft.ifftshift(FcsiKp1))
     
     return csiKp1
 
@@ -256,9 +256,9 @@ def propagateI(csiK, kpq, delta, k):
 def propagateBack(csiKp1c, kpq, delta, k):
     
     coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
-    FcsiKp1c = fft.fft2(fft.fftshift(csiKp1c))
+    FcsiKp1c = fft.fft2(csiKp1c)#fft.fftshift(csiKp1c))
     FcsiKc = bf.np.divide(FcsiKp1c,coeffExp)
-    csiKc = fft.ifft2(fft.ifftshift(FcsiKc))
+    csiKc = fft.ifft2(FcsiKc)#fft.ifftshift(FcsiKc))
     phiGuess = bf.np.arctan2(csiKc.imag,csiKc.real)
     
     return phiGuess
@@ -301,37 +301,34 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
     deltas = [(x-(N-1)/2)*dz for x in propList]
     
     err = bf.np.sum(images[(N-1)/2])**2
-    csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
+    #csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
     errList = []
     
     while err > errLim and currIter < iterLim:
         
         for ind in range(len(propList)-1):
-            #csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
-            #delta = deltas[ind+1]
-            delta = dz if propList[ind] < propList[ind+1] else -1*dz
+            csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
+            delta = deltas[ind+1]
+            #delta = dz if propList[ind] < propList[ind+1] else -1*dz
             csiKp1 = propagateI(csiK,kpq,delta,k)
             csiKp1I = bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)
             csiKp1P = bf.np.arctan2(csiKp1.imag,csiKp1.real)
-            if bf.np.equal(csiKp1I,images[propList[ind+1]]).all is False:
-                csiK = bf.np.multiply(sqrtImgs[propList[ind+1]],(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j))
-            else:
-                csiK = csiKp1
-            #err = bf.np.sum(bf.np.square(csiKp1I-images[propList[ind+1]]))
-            
-            #print 'err: '
-            #print err
-            
-            #if err > errLim:
-            #    csiKp1cR = sqrtImgs[propList[ind+1]]
-            #    csiKp1cP = bf.np.arctan2(csiKp1.imag,csiKp1.real)
-            #    csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1cP) + bf.np.sin(csiKp1cP)*1j))
-            #    phiGuess = propagateBack(csiKp1c, kpq, delta, k)
-                
+            #if bf.np.equal(csiKp1I,images[propList[ind+1]]).all is False:
+            #    csiK = bf.np.multiply(sqrtImgs[propList[ind+1]],(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j))
             #else:
-            #    pass
+            #    csiK = csiKp1
+            err = err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]])))
+            
+            if err > errLim:
+                csiKp1cR = sqrtImgs[propList[ind+1]]
+                csiKp1cP = bf.np.arctan2(csiKp1.imag,csiKp1.real)
+                csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1cP) + bf.np.sin(csiKp1cP)*1j))
+                phiGuess = propagateBack(csiKp1c, kpq, delta, k)
+                
+            else:
+                pass
         
-        err = bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]]))
+        #err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]])))
         errList.append(err)
         currIter += 1
         print currIter
