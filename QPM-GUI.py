@@ -127,6 +127,10 @@ class MainFrame(wx.Frame):
         
         path = openFileDialog.GetPath()
         
+        if len(path) == 0:
+            wx.MessageBox('No file selected')
+            return 0
+        
         dirDialog = wx.DirDialog(self,"Select a directory for the exported files")
         dirDialog.ShowModal()
         dir_path = dirDialog.GetPath()
@@ -592,7 +596,7 @@ class MainFrame(wx.Frame):
         self.bfIndexNum,self.bfIndexLabel,num01s1Sizer = self.createNum(self.p01s1,'Focus image index', sizeUnit, 1, 2, '0')
         
         cbBox01s2Sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.alphaFuncCbBox = wx.ComboBox(self.p01s2,size = tuple(sizeUnit*[3,1]),choices=['alpha*k^2','alpha*k^2 + alpha2*k','alpha*exp[-alpha2*k]'])
+        self.alphaFuncCbBox = wx.ComboBox(self.p01s2,size = tuple(sizeUnit*[3,1]),choices=['alpha*k^2','alpha*k^2 + alpha2*k','alpha*exp[-alpha2*k]','alpha*k + alpha2'])
         cbBox01s2Sizer.Add(self.alphaFuncCbBox,1,wx.ALIGN_CENTER_VERTICAL)
         
         self.alphaNum,self.alphaLabel,num01s3Sizer = self.createNum(self.p01s3,'Alpha factor', sizeUnit, 1, 2, '0.0001')        

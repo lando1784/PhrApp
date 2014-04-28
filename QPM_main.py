@@ -15,6 +15,21 @@ dxD = 7.98 * (10**-8)
 
 zeroSubst = 10**-100
 
+CTR = True
+
+def myFFT2(signal,center = True):
+    
+    result = fft.fftshift(fft.fft2(signal)) if center else fft.fft2(signal)
+    
+    return result
+
+
+def myIFFT2(Fsignal,center = True):
+    
+    result = fft.ifft2(fft.ifftshift(Fsignal)) if center else fft.ifftshift(Fsignal)
+    
+    return result
+
 
 def WxyFilterDenCorr(k,alpha,fselector):
     
@@ -25,6 +40,8 @@ def WxyFilterDenCorr(k,alpha,fselector):
             corrF = bf.np.square(k)*alpha[0] + k*alpha[1]
         if fselector == 2:
             corrF = alpha[0]*bf.np.exp(-1*k*alpha[1])
+        if fselector == 3:
+            corrF = alpha[0]*k + alpha[1] 
     
     return corrF
 
@@ -110,7 +127,7 @@ def ZaxisDerive_v3(imgs,bestFocusInd,degree,z=None):
 def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCorrD,imgBitsPerPixel=8):
     
     deltax = dx
-    ZderFFT=fft.fftshift(fft.fft2(ZaxisDer))
+    ZderFFT=myFFT2(ZaxisDer,CTR)
     
     kx = bf.np.matrix(bf.np.arange(-C/2,C/2))
     ky = bf.np.matrix(bf.np.arange(-R/2,R/2))
@@ -135,21 +152,21 @@ def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCo
     Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
     
     FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
-    IfftFiltX = fft.ifft2(fft.ifftshift(FilterX))
+    IfftFiltX = myIFFT2(FilterX,CTR)
     divX = bf.np.divide(IfftFiltX,Ifuoco)
     divX[fireInd] = bf.np.max(divX[bf.np.where(Ifuoco != 0)])
-    FFTdivX = fft.fftshift(fft.fft2(divX))
+    FFTdivX = myFFT2(divX,CTR)
     mulX = bf.np.multiply(bf.np.multiply(Wx,kx),FFTdivX)
-    IFFTmulX = fft.ifft2(fft.ifftshift(mulX))
+    IFFTmulX = myIFFT2(mulX,CTR)
     IFFTmulX = -k*(1/z)*(1/((C*deltax)**2))*IFFTmulX
     
     FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
-    IfftFiltY = fft.ifft2(fft.ifftshift(FilterY))
+    IfftFiltY = myIFFT2(FilterY,CTR)
     divY = bf.np.divide(IfftFiltY,Ifuoco)
     divY[fireInd] = bf.np.max(divY[bf.np.where(Ifuoco != 0)])
-    FFTdivY = fft.fftshift(fft.fft2(divY))
+    FFTdivY = myFFT2(divY,CTR)
     mulY = bf.np.multiply(bf.np.multiply(Wy,ky),FFTdivY)
-    IFFTmulY = fft.ifft2(fft.ifftshift(mulY))
+    IFFTmulY = myIFFT2(mulY,CTR)
     IFFTmulY = -k*(1/z)*(1/((R*deltax)**2))*IFFTmulY
     
     sumMul = IFFTmulX + IFFTmulY
@@ -173,9 +190,9 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     dFx = 1/(dx*C)
     dFy = 1/(dx*R)
     if z is not None:
-        ZderFFT=fft.fftshift(fft.fft2(ZaxisDer*k/z))
+        ZderFFT=myFFT2(ZaxisDer*k/z,CTR)
     else:
-        ZderFFT=fft.fftshift(fft.fft2(ZaxisDer*k))
+        ZderFFT=myFFT2(ZaxisDer*k,CTR)
     
     kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
     ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
@@ -197,6 +214,11 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     print alpha
     
+    print bf.np.max(kx)
+    print bf.np.min(kx)
+    print bf.np.max(ky)
+    print bf.np.min(ky)
+    
     kxCorr = WxyFilterDenCorr(kx, alpha, fselect)
     kyCorr = WxyFilterDenCorr(ky, alpha, fselect)
    
@@ -207,25 +229,48 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
     
     FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
-    IfftFiltX = fft.ifft2(fft.ifftshift(FilterX))
+    
+    ###############################################################################################################
+    
+    imgXr = bf.np.abs(FilterX)
+    
+    imgXr = imgXr - bf.np.min(imgXr)
+    
+    filterImXr = bf.Image.fromarray(imgXr)
+    
+    filterImXr.save('C:\\Users\\Ettore\\Desktop\\'+str(alpha)+'Xr.tif')
+    
+    imgXp = bf.np.angle(FilterX)
+    
+    imgXp = imgXp - bf.np.min(imgXp)
+    
+    filterImXp = bf.Image.fromarray((bf.adjustImgRange(imgXp,2**(16)-1)).astype(bf.imgTypes[16]),'I;16')
+    
+    filterImXp.save('C:\\Users\\Ettore\\Desktop\\'+str(alpha)+'Xi.tif')
+    
+    ###############################################################################################################
+    
+    IfftFiltX = myIFFT2(FilterX,CTR)
     divX = bf.np.divide(IfftFiltX,Ifuoco)
     #divX[fireInd] = bf.np.max(divX[bf.np.where(Ifuoco != 0)])
     #divX[fireInd] = 
-    FFTdivX = fft.fftshift(fft.fft2(divX))
+    FFTdivX = myFFT2(divX,CTR)
     mulX = bf.np.multiply(bf.np.multiply(Wx,kx),FFTdivX)
-    IFFTmulX = -1*fft.ifft2(fft.ifftshift(mulX))
+    IFFTmulX = -1*myIFFT2(mulX,CTR)
     
     FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
-    IfftFiltY = fft.ifft2(fft.ifftshift(FilterY))
+    IfftFiltY = myIFFT2(FilterY,CTR)
     divY = bf.np.divide(IfftFiltY,Ifuoco)
     #divY[fireInd] = bf.np.max(divY[bf.np.where(Ifuoco != 0)])
     #divY[fireInd] =
-    FFTdivY = fft.fftshift(fft.fft2(divY))
+    FFTdivY = myFFT2(divY,CTR)
     mulY = bf.np.multiply(bf.np.multiply(Wy,ky),FFTdivY)
-    IFFTmulY = -1*fft.ifft2(fft.ifftshift(mulY))
+    IFFTmulY = -1*myIFFT2(mulY,CTR)
     
     sumMul = IFFTmulX + IFFTmulY
     realSum = bf.np.real(sumMul)
+
+    #realSum = bf.np.unwrap(realSum)
 
     if not onlyAguess:
         rSmax = bf.np.max(realSum)
@@ -245,10 +290,10 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
 
 def propagateI(csiK, kpq, delta, k):
     
-    FcsiK = fft.fft2(csiK)#fft.fftshift(csiK))
+    FcsiK = myFFT2(csiK,CTR)
     coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
     FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
-    csiKp1 = fft.ifft2(FcsiKp1)#fft.ifftshift(FcsiKp1))
+    csiKp1 = myIFFT2(FcsiKp1,CTR)
     
     return csiKp1
 
@@ -256,9 +301,9 @@ def propagateI(csiK, kpq, delta, k):
 def propagateBack(csiKp1c, kpq, delta, k):
     
     coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
-    FcsiKp1c = fft.fft2(csiKp1c)#fft.fftshift(csiKp1c))
+    FcsiKp1c = myFFT2(csiKp1c,CTR)
     FcsiKc = bf.np.divide(FcsiKp1c,coeffExp)
-    csiKc = fft.ifft2(FcsiKc)#fft.ifftshift(FcsiKc))
+    csiKc = myIFFT2(FcsiKc,CTR)
     phiGuess = bf.np.arctan2(csiKc.imag,csiKc.real)
     
     return phiGuess
