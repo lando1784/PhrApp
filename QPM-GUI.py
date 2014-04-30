@@ -27,7 +27,7 @@ import csv
 #from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 #from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 
-polyfitDer = False
+polyfitDer = True
 zCorr = True
 
 if not polyfitDer:
@@ -596,16 +596,16 @@ class MainFrame(wx.Frame):
         self.bfIndexNum,self.bfIndexLabel,num01s1Sizer = self.createNum(self.p01s1,'Focus image index', sizeUnit, 1, 2, '0')
         
         cbBox01s2Sizer = wx.BoxSizer(wx.HORIZONTAL)
-        self.alphaFuncCbBox = wx.ComboBox(self.p01s2,size = tuple(sizeUnit*[3,1]),choices=['alpha*k^2','alpha*k^2 + alpha2*k','alpha*exp[-alpha2*k]','alpha*k + alpha2'])
+        self.alphaFuncCbBox = wx.ComboBox(self.p01s2,size = tuple(sizeUnit*[3,1]),choices=['alpha*k^2','alpha*k^2 + alpha2*k','alpha*exp[-alpha2*k]','alpha*k + alpha2','alpha*k^2 + alpha2'])
         cbBox01s2Sizer.Add(self.alphaFuncCbBox,1,wx.ALIGN_CENTER_VERTICAL)
         
         self.alphaNum,self.alphaLabel,num01s3Sizer = self.createNum(self.p01s3,'Alpha factor', sizeUnit, 1, 2, '0.0001')        
         self.alphaNum2,self.alphaLabel2,num02Sizer = self.createNum(self.p02,'Alpha factor 2', sizeUnit, 1, 2, '0.0001')
         self.zStepNum,self.zStepLabel,num02a1Sizer = self.createNum(self.p02a1,'Z step [nm]', sizeUnit, 1, 2, '500')        
-        self.xStepNum,self.xStepLabel,num02a2Sizer = self.createNum(self.p02a2,'Image resolution [nm/px]', sizeUnit, 1, 2, '79.8')
+        self.xStepNum,self.xStepLabel,num02a2Sizer = self.createNum(self.p02a2,'Image resolution [nm/px]', sizeUnit, 1, 2, '259')
         self.nSampleNum,self.nSampleLabel,num02a3Sizer = self.createNum(self.p02a3,'Sample refractive index', sizeUnit, 1, 2, '1.367')        
         self.nMedNum,self.nMedLabel,num02a4Sizer = self.createNum(self.p02a4,'Medium refractive index', sizeUnit, 1, 2, '1.333')        
-        self.lambdaNum,self.lambdaLabel,num02a5Sizer = self.createNum(self.p02a5,'Wavelength [nm]', sizeUnit, 1, 2, '530')
+        self.lambdaNum,self.lambdaLabel,num02a5Sizer = self.createNum(self.p02a5,'Wavelength [nm]', sizeUnit, 1, 2, '633')
                 
         text03Sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.resImgFileNameTxt = wx.TextCtrl(self.p03,size = tuple(sizeUnit*[2,1]))

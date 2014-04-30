@@ -13,7 +13,7 @@ zD = 500 * (10**-9)
 alphaCorrD = [1e-4]
 dxD = 7.98 * (10**-8)
 
-zeroSubst = 10**-100
+zeroSubst = 10**-9
 
 CTR = True
 
@@ -41,7 +41,10 @@ def WxyFilterDenCorr(k,alpha,fselector):
         if fselector == 2:
             corrF = alpha[0]*bf.np.exp(-1*k*alpha[1])
         if fselector == 3:
-            corrF = alpha[0]*k + alpha[1] 
+            corrF = alpha[0]*k + alpha[1]
+        if fselector == 4:
+            corrF = bf.np.square(k)*alpha[0] + alpha[1] 
+     
     
     return corrF
 
@@ -194,8 +197,16 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     else:
         ZderFFT=myFFT2(ZaxisDer*k,CTR)
     
-    kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
-    ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
+    #kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
+    #ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
+    
+    kxP = (bf.np.arange(C/2)+1)*dFx
+    kxM = bf.np.sort(-1*kxP)
+    kx = bf.np.matrix(bf.np.concatenate((kxM,kxP)))
+    
+    kyP = (bf.np.arange(R/2)+1)*dFy
+    kyM = bf.np.sort(-1*kyP)
+    ky = bf.np.matrix(bf.np.concatenate((kyM,kyP)))
     
     kx = kx.T*bf.np.matrix(bf.np.ones(shape=[1,R]))
     kx = bf.np.float64(kx.T)
@@ -225,8 +236,13 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     #kxCorr = bf.np.square(kx)*alpha
     #kyCorr = bf.np.square(ky)*alpha
     
-    Wx = bf.np.divide(V,(bf.np.square(V)+kxCorr))
-    Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
+    if len(alpha) == 1 and alpha[0] == 0:
+        oneone = bf.np.matrix(bf.np.ones((R,C)))
+        Wx = Wy = bf.np.divide(oneone,V)
+        print 'ciao'
+    else:
+        Wx = bf.np.divide(V,(bf.np.square(V)+kxCorr))
+        Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
     
     FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
     
@@ -238,7 +254,7 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     filterImXr = bf.Image.fromarray(imgXr)
     
-    filterImXr.save('C:\\Users\\Ettore\\Desktop\\'+str(alpha)+'Xr.tif')
+    filterImXr.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterX\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Xr.tif')
     
     imgXp = bf.np.angle(FilterX)
     
@@ -246,23 +262,42 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     filterImXp = bf.Image.fromarray((bf.adjustImgRange(imgXp,2**(16)-1)).astype(bf.imgTypes[16]),'I;16')
     
-    filterImXp.save('C:\\Users\\Ettore\\Desktop\\'+str(alpha)+'Xi.tif')
+    filterImXp.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterX\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Xi.tif')
     
     ###############################################################################################################
     
     IfftFiltX = myIFFT2(FilterX,CTR)
     divX = bf.np.divide(IfftFiltX,Ifuoco)
     #divX[fireInd] = bf.np.max(divX[bf.np.where(Ifuoco != 0)])
-    #divX[fireInd] = 
     FFTdivX = myFFT2(divX,CTR)
     mulX = bf.np.multiply(bf.np.multiply(Wx,kx),FFTdivX)
     IFFTmulX = -1*myIFFT2(mulX,CTR)
     
     FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
+    
+    ###############################################################################################################
+    
+    imgYr = bf.np.abs(FilterY)
+    
+    imgYr = imgYr - bf.np.min(imgYr)
+    
+    filterImYr = bf.Image.fromarray(imgYr)
+    
+    filterImYr.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterY\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Yr.tif')
+    
+    imgYp = bf.np.angle(FilterY)
+    
+    imgYp = imgYp - bf.np.min(imgYp)
+    
+    filterImYp = bf.Image.fromarray((bf.adjustImgRange(imgYp,2**(16)-1)).astype(bf.imgTypes[16]),'I;16')
+    
+    filterImYp.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterY\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Yi.tif')
+    
+    ###############################################################################################################
+    
     IfftFiltY = myIFFT2(FilterY,CTR)
     divY = bf.np.divide(IfftFiltY,Ifuoco)
     #divY[fireInd] = bf.np.max(divY[bf.np.where(Ifuoco != 0)])
-    #divY[fireInd] =
     FFTdivY = myFFT2(divY,CTR)
     mulY = bf.np.multiply(bf.np.multiply(Wy,ky),FFTdivY)
     IFFTmulY = -1*myIFFT2(mulY,CTR)
