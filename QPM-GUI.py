@@ -27,7 +27,7 @@ import csv
 #from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
 #from matplotlib.backends.backend_wx import NavigationToolbar2Wx
 
-polyfitDer = True
+polyfitDer = False
 zCorr = True
 
 if not polyfitDer:

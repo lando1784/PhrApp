@@ -31,6 +31,29 @@ def myIFFT2(Fsignal,center = True):
     return result
 
 
+def kCoords(R,C,dx):
+    
+    dFx = 1.0/(dx*C)
+    dFy = 1.0/(dx*R)
+    
+    #kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
+    #ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
+    
+    kxP = (bf.np.arange(C/2)+1)*dFx
+    kxM = bf.np.sort(-1*kxP)
+    kx = bf.np.matrix(bf.np.concatenate((kxM,kxP)))
+    
+    kyP = (bf.np.arange(R/2)+1)*dFy
+    kyM = bf.np.sort(-1*kyP)
+    ky = bf.np.matrix(bf.np.concatenate((kyM,kyP)))
+    
+    kx = kx.T*bf.np.matrix(bf.np.ones(shape=[1,R]))
+    kx = bf.np.float64(kx.T)
+    ky = bf.np.float64(ky.T*bf.np.matrix(bf.np.ones(shape=[1,C])))
+    
+    return kx,ky
+
+
 def WxyFilterDenCorr(k,alpha,fselector):
     
     if len(alpha)==1:
@@ -132,12 +155,7 @@ def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCo
     deltax = dx
     ZderFFT=myFFT2(ZaxisDer,CTR)
     
-    kx = bf.np.matrix(bf.np.arange(-C/2,C/2))
-    ky = bf.np.matrix(bf.np.arange(-R/2,R/2))
-    
-    kx = kx.T*bf.np.matrix(bf.np.ones(shape=[1,R]))
-    kx = bf.np.float64(kx.T)
-    ky = bf.np.float64(ky.T*bf.np.matrix(bf.np.ones(shape=[1,C])))
+    kx,ky = kCoords(R,C,1)
     
     kx[bf.np.where(kx == 0)] = zeroSubst
     ky[bf.np.where(ky == 0)] = zeroSubst
@@ -189,28 +207,12 @@ def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCo
 
 def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCorrD,imgBitsPerPixel=8, onlyAguess = False):
     
-    deltax = dx
-    dFx = 1/(dx*C)
-    dFy = 1/(dx*R)
     if z is not None:
         ZderFFT=myFFT2(ZaxisDer*k/z,CTR)
     else:
         ZderFFT=myFFT2(ZaxisDer*k,CTR)
     
-    #kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
-    #ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
-    
-    kxP = (bf.np.arange(C/2)+1)*dFx
-    kxM = bf.np.sort(-1*kxP)
-    kx = bf.np.matrix(bf.np.concatenate((kxM,kxP)))
-    
-    kyP = (bf.np.arange(R/2)+1)*dFy
-    kyM = bf.np.sort(-1*kyP)
-    ky = bf.np.matrix(bf.np.concatenate((kyM,kyP)))
-    
-    kx = kx.T*bf.np.matrix(bf.np.ones(shape=[1,R]))
-    kx = bf.np.float64(kx.T)
-    ky = bf.np.float64(ky.T*bf.np.matrix(bf.np.ones(shape=[1,C])))
+    kx,ky = kCoords(R,C,dx)
     
     kx[bf.np.where(kx == 0)] = zeroSubst
     ky[bf.np.where(ky == 0)] = zeroSubst
@@ -232,11 +234,8 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     kxCorr = WxyFilterDenCorr(kx, alpha, fselect)
     kyCorr = WxyFilterDenCorr(ky, alpha, fselect)
-   
-    #kxCorr = bf.np.square(kx)*alpha
-    #kyCorr = bf.np.square(ky)*alpha
     
-    if len(alpha) == 1 and alpha[0] == 0:
+    if len(alpha) == 1 and alpha[0] == 0.0:
         oneone = bf.np.matrix(bf.np.ones((R,C)))
         Wx = Wy = bf.np.divide(oneone,V)
         print 'ciao'
@@ -244,11 +243,10 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
         Wx = bf.np.divide(V,(bf.np.square(V)+kxCorr))
         Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
     
-    FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
     
     ###############################################################################################################
     
-    imgXr = bf.np.abs(FilterX)
+    imgXr = bf.np.abs(bf.np.multiply(kx,Wx))
     
     imgXr = imgXr - bf.np.min(imgXr)
     
@@ -256,7 +254,7 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     filterImXr.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterX\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Xr.tif')
     
-    imgXp = bf.np.angle(FilterX)
+    imgXp = bf.np.angle(bf.np.multiply(kx,Wx))
     
     imgXp = imgXp - bf.np.min(imgXp)
     
@@ -265,7 +263,10 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     filterImXp.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterX\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Xi.tif')
     
     ###############################################################################################################
+    ###############################################################################################################
     
+    
+    FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
     IfftFiltX = myIFFT2(FilterX,CTR)
     divX = bf.np.divide(IfftFiltX,Ifuoco)
     #divX[fireInd] = bf.np.max(divX[bf.np.where(Ifuoco != 0)])
@@ -273,11 +274,10 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     mulX = bf.np.multiply(bf.np.multiply(Wx,kx),FFTdivX)
     IFFTmulX = -1*myIFFT2(mulX,CTR)
     
-    FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
     
     ###############################################################################################################
     
-    imgYr = bf.np.abs(FilterY)
+    imgYr = bf.np.abs(bf.np.multiply(ky,Wy))
     
     imgYr = imgYr - bf.np.min(imgYr)
     
@@ -285,7 +285,7 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     filterImYr.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterY\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Yr.tif')
     
-    imgYp = bf.np.angle(FilterY)
+    imgYp = bf.np.angle(bf.np.multiply(ky,Wy))
     
     imgYp = imgYp - bf.np.min(imgYp)
     
@@ -294,7 +294,9 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     filterImYp.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterY\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Yi.tif')
     
     ###############################################################################################################
+    ###############################################################################################################
     
+    FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
     IfftFiltY = myIFFT2(FilterY,CTR)
     divY = bf.np.divide(IfftFiltY,Ifuoco)
     #divY[fireInd] = bf.np.max(divY[bf.np.where(Ifuoco != 0)])
@@ -348,15 +350,7 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
     
     N,R,C = bf.np.shape(images)
     
-    dFx = 1/(dx*C)
-    dFy = 1/(dx*R)
-    
-    kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
-    ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
-    
-    kx = kx.T*bf.np.matrix(bf.np.ones(shape=[1,R]))
-    kx = bf.np.float64(kx.T)
-    ky = bf.np.float64(ky.T*bf.np.matrix(bf.np.ones(shape=[1,C])))
+    kx,ky = kCoords(R,C,dx)
     
     kpq = bf.np.square(kx) + bf.np.square(ky) 
     
@@ -397,12 +391,11 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = None, errLim = 10**-6, iterL
             #    csiK = bf.np.multiply(sqrtImgs[propList[ind+1]],(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j))
             #else:
             #    csiK = csiKp1
-            err = err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]])))
+            err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]])))
             
             if err > errLim:
                 csiKp1cR = sqrtImgs[propList[ind+1]]
-                csiKp1cP = bf.np.arctan2(csiKp1.imag,csiKp1.real)
-                csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1cP) + bf.np.sin(csiKp1cP)*1j))
+                csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j))
                 phiGuess = propagateBack(csiKp1c, kpq, delta, k)
                 
             else:
