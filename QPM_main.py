@@ -243,29 +243,6 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
         Wx = bf.np.divide(V,(bf.np.square(V)+kxCorr))
         Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
     
-    
-    ###############################################################################################################
-    
-    imgXr = bf.np.abs(bf.np.multiply(kx,Wx))
-    
-    imgXr = imgXr - bf.np.min(imgXr)
-    
-    filterImXr = bf.Image.fromarray(imgXr)
-    
-    filterImXr.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterX\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Xr.tif')
-    
-    imgXp = bf.np.angle(bf.np.multiply(kx,Wx))
-    
-    imgXp = imgXp - bf.np.min(imgXp)
-    
-    filterImXp = bf.Image.fromarray((bf.adjustImgRange(imgXp,2**(16)-1)).astype(bf.imgTypes[16]),'I;16')
-    
-    filterImXp.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterX\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Xi.tif')
-    
-    ###############################################################################################################
-    ###############################################################################################################
-    
-    
     FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
     IfftFiltX = myIFFT2(FilterX,CTR)
     divX = bf.np.divide(IfftFiltX,Ifuoco)
@@ -273,28 +250,6 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     FFTdivX = myFFT2(divX,CTR)
     mulX = bf.np.multiply(bf.np.multiply(Wx,kx),FFTdivX)
     IFFTmulX = -1*myIFFT2(mulX,CTR)
-    
-    
-    ###############################################################################################################
-    
-    imgYr = bf.np.abs(bf.np.multiply(ky,Wy))
-    
-    imgYr = imgYr - bf.np.min(imgYr)
-    
-    filterImYr = bf.Image.fromarray(imgYr)
-    
-    filterImYr.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterY\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Yr.tif')
-    
-    imgYp = bf.np.angle(bf.np.multiply(ky,Wy))
-    
-    imgYp = imgYp - bf.np.min(imgYp)
-    
-    filterImYp = bf.Image.fromarray((bf.adjustImgRange(imgYp,2**(16)-1)).astype(bf.imgTypes[16]),'I;16')
-    
-    filterImYp.save('C:\\Users\\Ettore\\Desktop\\BuchiFilterY\\'+str(fselect)+'_'+str(alphaCorr[0])+'_'+(str(alphaCorr[1]) if len(alphaCorr)>1 else '')+'Yi.tif')
-    
-    ###############################################################################################################
-    ###############################################################################################################
     
     FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
     IfftFiltY = myIFFT2(FilterY,CTR)
