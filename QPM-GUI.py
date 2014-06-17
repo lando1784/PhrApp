@@ -569,7 +569,7 @@ class MainFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, title = "QPM User Interface" , size=(1000, 830), style = wx.DEFAULT_FRAME_STYLE)# ^ wx.VSCROLL)#, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
         
-        sizeUnit = bf.np.array([80,42])
+        sizeUnit = bf.np.array([80,21])
         
         self.createMenu()
         s = self.createGrid()
