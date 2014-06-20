@@ -39,12 +39,12 @@ def kCoords(R,C,dx):
     #kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
     #ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
     
-    kxP = (bf.np.arange(C/2)+1)*dFx
-    kxM = bf.np.sort(-1*kxP)
+    kxP = (bf.np.arange(C/2+C%2)+1)*dFx
+    kxM = bf.np.sort(-1*kxP)[C%2:]
     kx = bf.np.matrix(bf.np.concatenate((kxM,kxP)))
     
-    kyP = (bf.np.arange(R/2)+1)*dFy
-    kyM = bf.np.sort(-1*kyP)
+    kyP = (bf.np.arange(R/2+R%2)+1)*dFy
+    kyM = bf.np.sort(-1*kyP)[R%2:]
     ky = bf.np.matrix(bf.np.concatenate((kyM,kyP)))
     
     kx = kx.T*bf.np.matrix(bf.np.ones(shape=[1,R]))
@@ -221,16 +221,7 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     V = bf.np.square(kx)+bf.np.square(ky)
     
-    print alphaCorr
-    
     alpha = bf.np.max(V)*alphaCorr
-    
-    print alpha
-    
-    print bf.np.max(kx)
-    print bf.np.min(kx)
-    print bf.np.max(ky)
-    print bf.np.min(ky)
     
     kxCorr = WxyFilterDenCorr(kx, alpha, fselect)
     kyCorr = WxyFilterDenCorr(ky, alpha, fselect)
@@ -238,7 +229,6 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     if len(alpha) == 1 and alpha[0] == 0.0:
         oneone = bf.np.matrix(bf.np.ones((R,C)))
         Wx = Wy = bf.np.divide(oneone,V)
-        print 'ciao'
     else:
         Wx = bf.np.divide(V,(bf.np.square(V)+kxCorr))
         Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
@@ -327,8 +317,6 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
     
     propList = x[(len(x)-1)/2:len(x)]+x[-2:-1*(len(x)+1):-1]+x[1:(len(x)-1)/2+1]
     
-    print propList
-    
     deltas = [(x-(N-1)/2)*dz for x in propList]
     
     err = bf.np.sum(images[(N-1)/2])**2
@@ -367,7 +355,6 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
         errList.append(err)
         currIter += 1
         print currIter
-        print err
     
     phiGuess = bf.np.arctan2(csiK.imag,csiK.real)
     

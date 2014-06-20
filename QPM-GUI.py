@@ -100,7 +100,6 @@ class MainFrame(wx.Frame):
             
             self.Bind(wx.EVT_SCROLL_CHANGED, self.onScroll, self.imgSclBar)
             self.Bind(wx.EVT_COMBOBOX, self.onCombo, self.currImgCbBox)
-            self.Bind(wx.EVT_COMBOBOX, self.onCombo, self.alphaFuncCbBox)
             self.Bind(wx.EVT_RADIOBUTTON, self.onRadio, self.radio1)
             self.Bind(wx.EVT_RADIOBUTTON, self.onRadio, self.radio2)
             self.Bind(wx.EVT_CHECKBOX, self.onCheckFocus, self.bfImgCkBox)
@@ -309,7 +308,7 @@ class MainFrame(wx.Frame):
         myCursor= wx.StockCursor(wx.CURSOR_WAIT)
         self.SetCursor(myCursor)
         self.degree = None
-        path3d = self.resImgDirTxt.GetValue()+'\\'+self.resImgFileNameTxt.GetValue()+self.fileExtCbBox.GetValue()
+        
         if polyfitDer and self.algCbBox.GetSelection() is not 1:
             degDef = 3 if len(self.images)>3 else len(self.images)-1
             degreeDialog = wx.TextEntryDialog(self,'Enter the polynomial fit degree:\n',caption='Degree Dialog', defaultValue=str(degDef))
@@ -395,14 +394,7 @@ class MainFrame(wx.Frame):
         #bf.sp.misc.imsave(*paramsSet[self.fileExtCbBox.GetSelection()])
         img = bf.Image.fromarray(*paramsSet[self.fileExtCbBox.GetSelection()])
         img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
-        
-        if self.algCbBox.GetSelection() != 0:
-            errFile = open(self.resImgDirTxt.GetValue()+'\\'+self.resImgFileNameTxt.GetValue()+'err.csv','w')
-            errWrt = csv.writer(errFile,delimiter='\t')
-            for e in self.errList:
-                errWrt.writerow(str(e))
             
-        
         
     def onView3D(self, event):
         
@@ -412,10 +404,157 @@ class MainFrame(wx.Frame):
         showME = bf.np.array(showME.getdata()).reshape(showME.size[::-1])
         showME = bf.adjustImgRange(showME,255,8)
         #bf.cv2.imshow('3D image',showME)
-        x = bf.np.arange(bf.np.shape(showME)[0])
-        y = bf.np.arange(bf.np.shape(showME)[1])
-        mlab.surf(x,y,bf.np.array(showME[:,:]))
+        #x = bf.np.arange(bf.np.shape(showME)[0])
+        #y = bf.np.arange(bf.np.shape(showME)[1])
+        #mlab.surf(x,y,bf.np.array(showME[:,:]))
 
+    
+    def onStartScp(self,event):
+        
+        if len(self.images)>0:
+            warningDialog = wx.MessageBox("You have opened other images. If you continue with the script you'll lose all your data. Do you wish to continue?", style=wx.YES|wx.NO)
+            if warningDialog == 8: return False
+        
+        warningDialog = wx.MessageBox("Have you already set all the parameters for the phase retrieval algorithm?", style=wx.YES|wx.NO)
+        if warningDialog == 8: return False
+        
+        openFileDialog = wx.FileDialog(self, "Open", "", "", 
+                                       "TIFF files (*.tif)|*.tif|TIFF files (*.tiff)|*.tiff",
+                                       wx.MULTIPLE | wx.FD_FILE_MUST_EXIST)
+        openFileDialog.ShowModal()
+        scriptImagePaths = openFileDialog.GetPaths()
+        scriptImagePaths.sort()
+        N = len(scriptImagePaths)
+        scriptImagePaths = bf.np.array(scriptImagePaths)
+        ctr = (N-N%2)/2
+        
+        maxAllowed = 11 if len(scriptImagePaths)>=11 else (7 if len(scriptImagePaths)>=7 else 5)
+        dimDialog = wx.TextEntryDialog(self,'How many images have to be used? \n (Odd number equal or lower than {0})'.format(maxAllowed))
+        dimDialog.ShowModal()
+        scriptPackLen = int(dimDialog.GetValue())
+        
+        dirDialog = wx.DirDialog(self,"Select a directory for the generated files")
+        dirDialog.ShowModal()
+        dir_path = dirDialog.GetPath()
+        
+        nameDialog = wx.TextEntryDialog(self,'Enter a base name for the generated files')
+        nameDialog.ShowModal()
+        baseName = nameDialog.GetValue()
+        startStep = int(self.zStepNum.GetValue())
+        self.bestFocusIndex = (scriptPackLen-scriptPackLen%2)/2
+        
+        for n in bf.np.arange(((N-1)-(N-1)%(scriptPackLen-1))/(scriptPackLen-1))+1:
+            
+            print n
+            
+            self.images = []
+            setInd = list((bf.np.arange(scriptPackLen))*n+ctr-((scriptPackLen-scriptPackLen%2)/2)*n)
+            self.imagePaths = scriptImagePaths[setInd]
+            
+            print self.imagePaths
+            
+            self.imgInfo = tc.TiffInfo()
+            self.imgInfo.tiff = self.imagePaths[0]
+            self.zStepNum.SetValue(str(startStep*n))
+            
+            for path in self.imagePaths:
+                tempImg = bf.Image.open(path)
+                imgPreData = bf.np.array(tempImg.getdata())
+                if len(bf.np.shape(imgPreData)) > 1:
+                    imgPreData = imgPreData[:,1]
+                data = imgPreData.reshape(tempImg.size[::-1])
+                if self.imgInfo.BitsPerSample == -1 or self.imgInfo.BitsPerSample == 0 or self.imgInfo.BitsPerSample > 32:
+                    self.BitsPerSample = 16
+                else:
+                    self.BitsPerSample = self.imgInfo.BitsPerSample
+                data = data.astype(bf.imgTypes[self.BitsPerSample])
+                self.images.append(data)
+                
+            kN = (2 * bf.np.pi) / (float(self.lambdaNum.GetValue())*10**(-9))
+            myCursor= wx.StockCursor(wx.CURSOR_WAIT)
+            self.SetCursor(myCursor)
+            self.degree = None
+            path3d = self.resImgDirTxt.GetValue()+'\\'+self.resImgFileNameTxt.GetValue()+self.fileExtCbBox.GetValue()
+            if polyfitDer and self.algCbBox.GetSelection() is not 1:
+                degDef = 3 if len(self.images)>3 else len(self.images)-1
+                degreeDialog = wx.TextEntryDialog(self,'Enter the polynomial fit degree:\n',caption='Degree Dialog', defaultValue=str(degDef))
+                degreeDialog.ShowModal()
+                self.degree = int(degreeDialog.GetValue())
+                if zCorr:
+                    zder = qpm.ZaxisDerive_v3(self.images, self.bestFocusIndex,self.degree,z=float(self.zStepNum.GetValue())*(10**(-9)))
+                    zN = None
+                else:
+                    zder = qpm.ZaxisDerive_v3(self.images, self.bestFocusIndex,self.degree)
+                    zN = float(self.zStepNum.GetValue())*(10**(-9))
+            elif not polyfitDer and self.algCbBox.GetSelection() is not 1:
+                zder = qpm.ZaxisDerive(self.images, self.bestFocusIndex)
+                zN = float(self.zStepNum.GetValue())*(10**(-9))
+            else:
+                zN = float(self.zStepNum.GetValue())*(10**(-9))
+            R,C = bf.np.shape(self.images[self.bestFocusIndex])
+            deltaX = (float(self.xStepNum.GetValue())*(10**(-9)))
+            if self.alphaFuncCbBox.GetSelection() is not 0:
+                alphaPar = bf.np.array([float(self.alphaNum.GetValue()),float(self.alphaNum2.GetValue())])
+            else:
+                alphaPar = bf.np.array([float(self.alphaNum.GetValue())])
+        
+            if self.algCbBox.GetSelection() == 0:
+                if dimRet:
+                    self.res3Dimage, pixelToRad = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
+                else:
+                    self.res3Dimage, pixelToRad = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
+            else:
+                if self.algCbBox.GetSelection() == 2:
+                    if dimRet:
+                        phaseGuess = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample, onlyAguess = True)
+                    else:
+                        phaseGuess = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample, onlyAguess = True)
+                        temp, self.errList = qpm.AI(self.images,zN,deltaX,kN,phaseGuess,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
+                        self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
+                        pixelToRad = 1
+                else:
+                    temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
+                    self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
+                    pixelToRad = 1
+        
+            nS = float(self.nSampleNum.GetValue())
+            nM = float(self.nMedNum.GetValue())
+            #self.radToHeight = qpm.lamD*(pixelToRad/(2*bf.np.pi))*(nS-nM)
+            self.radToHeight = pixelToRad/(qpm.kD*(nS-nM))
+            myCursor= wx.StockCursor(wx.CURSOR_ARROW)
+            self.SetCursor(myCursor)
+              
+            path3D = dir_path+os.sep+baseName+'_n-'+str(n)+'_img-'+str(scriptPackLen)+self.fileExtCbBox.GetValue()
+            
+            comment = str('Pixel to nm: ' + str(self.radToHeight) + '\ndX: ' + self.xStepNum.GetValue() + '\ndZ: ' + self.zStepNum.GetValue() + '\nnSample: ' + self.nSampleNum.GetValue() + '\nnMedium: ' + 
+                          self.nMedNum.GetValue() + '\nAlpha function: ' + self.alphaFuncCbBox.GetValue() + '\nAlpha 1: ' + self.alphaNum.GetValue() + '\nAlpha 2: ' + self.alphaNum2.GetValue() + '\nImg num: ' + str(len(self.images)) + '\nFocus index: ' + str(self.bestFocusIndex) + '\nPolyFit Der: ' +
+                          str(polyfitDer) + '\nWavelength: ' + self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
+            if self.algCbBox.GetSelection() != 0:
+                comment = comment+str('\nMax iter num: ' + self.iterLimNum.GetValue() + '\nMaxError: ' + self.errLimNum.GetValue())
+            paramsSet = ([[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
+                          [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
+                          [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],
+                          [path3D,''],
+                          [path3D,''],
+                          [path3D,comment]
+                          ]
+                         if self.BitsPerSample == 16 else
+                         [[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
+                          [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
+                          [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample])],
+                          [path3D,''],
+                          [path3D,''],
+                          [path3D,comment]
+                          ])
+        
+        
+        
+            #bf.sp.misc.imsave(*paramsSet[self.fileExtCbBox.GetSelection()])
+            img = bf.Image.fromarray(*paramsSet[self.fileExtCbBox.GetSelection()])
+            img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
+            
+                
+            
     
     def drawMe(self,ind):
         
@@ -556,13 +695,18 @@ class MainFrame(wx.Frame):
 
         menuBar = wx.MenuBar()
         menuFile = wx.Menu()
-        menu1 = wx.Menu()
-        self.openFiles = menu1.Append(wx.ID_ANY, "&Open", "This the text in the Statusbar")
+        self.openFiles = menuFile.Append(wx.ID_ANY, "&Open", "Open .tif and .tiff files")
         self.Bind(wx.EVT_MENU, self.onOpen, self.openFiles)
         if pilot:
-            self.openNd2Files = menu1.Append(wx.ID_ANY, "Open &Nd2", "This the text in the Statusbar")
+            self.openNd2Files = menuFile.Append(wx.ID_ANY, "Open &Nd2", "Open .nd2 files")
             self.Bind(wx.EVT_MENU, self.onOpenNd2, self.openNd2Files)
-        menuBar.Append(menu1, "&File")
+        menuBar.Append(menuFile, "&File")
+        
+        menuScript = wx.Menu()
+        self.startScript = menuScript.Append(wx.ID_ANY, "&Start Script", "Start Algorithm test script")
+        self.Bind(wx.EVT_MENU, self.onStartScp, self.startScript)
+        menuBar.Append(menuScript, "&Test")
+        
         self.SetMenuBar(menuBar)
         
 
@@ -573,6 +717,7 @@ class MainFrame(wx.Frame):
         
         self.createMenu()
         s = self.createGrid()
+        self.images = []
 
         text00Sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.currDirTxt = wx.TextCtrl(self.p00,size = tuple(sizeUnit*[2,1]),style = wx.TE_MULTILINE)
@@ -706,6 +851,7 @@ class MainFrame(wx.Frame):
         self.Bind(wx.EVT_TEXT, self.onTextinNumF, self.nSampleNum)
         self.Bind(wx.EVT_TEXT, self.onTextinNumF, self.nMedNum)
         self.Bind(wx.EVT_TEXT, self.onTextinNumI, self.lambdaNum)
+        self.Bind(wx.EVT_COMBOBOX, self.onCombo, self.alphaFuncCbBox)
             
         
         self.SetAutoLayout(True)
