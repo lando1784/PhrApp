@@ -347,7 +347,7 @@ class MainFrame(wx.Frame):
                 self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
             else:
-                temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
+                temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,'Test',float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
                 self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
         

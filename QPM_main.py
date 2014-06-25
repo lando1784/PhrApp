@@ -36,9 +36,6 @@ def kCoords(R,C,dx):
     dFx = 1.0/(dx*C)
     dFy = 1.0/(dx*R)
     
-    #kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
-    #ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
-    
     kxP = (bf.np.arange(C/2+C%2)+1)*dFx
     kxM = bf.np.sort(-1*kxP)[C%2:]
     kx = bf.np.matrix(bf.np.concatenate((kxM,kxP)))
@@ -46,6 +43,21 @@ def kCoords(R,C,dx):
     kyP = (bf.np.arange(R/2+R%2)+1)*dFy
     kyM = bf.np.sort(-1*kyP)[R%2:]
     ky = bf.np.matrix(bf.np.concatenate((kyM,kyP)))
+    
+    kx = kx.T*bf.np.matrix(bf.np.ones(shape=[1,R]))
+    kx = bf.np.float64(kx.T)
+    ky = bf.np.float64(ky.T*bf.np.matrix(bf.np.ones(shape=[1,C])))
+    
+    return kx,ky
+
+
+def kCoordsPrev(R,C,dx):
+    
+    dFx = 1.0/(dx*C)
+    dFy = 1.0/(dx*R)
+    
+    kx = bf.np.matrix(bf.np.arange(-C/2,C/2))*dFx
+    ky = bf.np.matrix(bf.np.arange(-R/2,R/2))*dFy
     
     kx = kx.T*bf.np.matrix(bf.np.ones(shape=[1,R]))
     kx = bf.np.float64(kx.T)
@@ -212,6 +224,7 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     else:
         ZderFFT=myFFT2(ZaxisDer*k,CTR)
     
+    #kx,ky = kCoordsPrev(R,C,dx)
     kx,ky = kCoords(R,C,dx)
     
     kx[bf.np.where(kx == 0)] = zeroSubst
@@ -317,10 +330,10 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
     
     propList = x[(len(x)-1)/2:len(x)]+x[-2:-1*(len(x)+1):-1]+x[1:(len(x)-1)/2+1]
     
-    deltas = [(x-(N-1)/2)*dz for x in propList]
+    deltas = [(x-(N-N%2)/2)*dz for x in propList]
     
-    err = bf.np.sum(images[(N-1)/2])**2
-    csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
+    err = bf.np.sum(images[(N-N%2)/2])**2
+    csiK = bf.np.multiply(sqrtImgs[(N-N%2)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
     errList = []
     
     while err > errLim and currIter < iterLim:
