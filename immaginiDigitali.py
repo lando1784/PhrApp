@@ -33,7 +33,7 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
 #	kx = np.float64(kx.T)
 #	ky = np.float64(ky.T*np.matrix(np.ones(shape=[1,pxX])))
     #kpq = np.zeros((pxY,pxX))
-    kx,ky = qpm.kCoords(pxY,pxX,dx)
+    kx,ky = qpm.kCoordsPrev(pxY,pxX,dx)
     
     kpq = np.square(kx) + np.square(ky)
 
