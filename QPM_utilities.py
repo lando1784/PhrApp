@@ -152,22 +152,22 @@ def ZaxisDerive_v3(imgs,bestFocusInd,degree,z=None):
     return Derivata
 
 
-def propagateI(csiK, kpq, delta, k):
+def propagateI(csiK, kpq, delta, k, ctr):
     
-    FcsiK = myFFT2(csiK,CTR)
+    FcsiK = myFFT2(csiK,ctr)
     coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
     FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
-    csiKp1 = myIFFT2(FcsiKp1,CTR)
+    csiKp1 = myIFFT2(FcsiKp1,ctr)
     
     return csiKp1
 
 
-def propagateBack(csiKp1c, kpq, delta, k):
+def propagateBack(csiKp1c, kpq, delta, k,ctr):
     
     coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
-    FcsiKp1c = myFFT2(csiKp1c,CTR)
+    FcsiKp1c = myFFT2(csiKp1c,ctr)
     FcsiKc = bf.np.divide(FcsiKp1c,coeffExp)
-    csiKc = myIFFT2(FcsiKc,CTR)
+    csiKc = myIFFT2(FcsiKc,ctr)
     phiGuess = bf.np.arctan2(csiKc.imag,csiKc.real)
     
     return phiGuess

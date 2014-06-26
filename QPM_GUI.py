@@ -22,11 +22,6 @@ from subprocess import Popen #di sistema
 from wx import Point
 import csv
 
-#matplotlib.interactive( True )
-#matplotlib.use('WXAgg')
-#from matplotlib.backends.backend_wxagg import FigureCanvasWxAgg as FigureCanvas
-#from matplotlib.backends.backend_wx import NavigationToolbar2Wx
-
 polyfitDer = False
 zCorr = True
 
@@ -404,9 +399,9 @@ class MainFrame(wx.Frame):
         showME = bf.np.array(showME.getdata()).reshape(showME.size[::-1])
         showME = bf.adjustImgRange(showME,255,8)
         #bf.cv2.imshow('3D image',showME)
-        #x = bf.np.arange(bf.np.shape(showME)[0])
-        #y = bf.np.arange(bf.np.shape(showME)[1])
-        #mlab.surf(x,y,bf.np.array(showME[:,:]))
+        x = bf.np.arange(bf.np.shape(showME)[0])
+        y = bf.np.arange(bf.np.shape(showME)[1])
+        mlab.surf(x,y,bf.np.array(showME[:,:]))
 
     
     def onStartScp(self,event):
@@ -553,7 +548,10 @@ class MainFrame(wx.Frame):
             img = bf.Image.fromarray(*paramsSet[self.fileExtCbBox.GetSelection()])
             img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
             
-                
+    
+    def onCreateTestImg(self,event):
+        pass
+                    
             
     
     def drawMe(self,ind):
@@ -704,7 +702,9 @@ class MainFrame(wx.Frame):
         
         menuScript = wx.Menu()
         self.startScript = menuScript.Append(wx.ID_ANY, "&Start Script", "Start Algorithm test script")
+        self.testImg = menuScript.Append(wx.ID_ANY, "&Create Test Images", "Creates a set of test images")
         self.Bind(wx.EVT_MENU, self.onStartScp, self.startScript)
+        self.Bind(wx.EVT_MENU, self.onCreateTestImg, self.testImg)
         menuBar.Append(menuScript, "&Test")
         
         self.SetMenuBar(menuBar)

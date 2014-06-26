@@ -172,7 +172,7 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
             #csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j))
             #delta = deltas[ind+1]
             delta = dz if propList[ind] < propList[ind+1] else -1*dz
-            csiKp1 = propagateI(csiK,kpq,delta,k)
+            csiKp1 = propagateI(csiK,kpq,delta,k,CTR)
             csiKp1I = bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)
             csiKp1P = bf.np.arctan2(csiKp1.imag,csiKp1.real)
             

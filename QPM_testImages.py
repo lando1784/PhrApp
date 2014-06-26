@@ -53,41 +53,43 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
     print np.min(I)
     I -= np.min(I)
     phi = 0.95*((2*np.pi/0.9)*(1.0-I)-np.pi)
+    #I = np.ones((pxY,pxX))*128
+    print np.shape(I)
     csi = np.sqrt(I)*(np.cos(phi)+1j*np.sin(phi))
     
     deltas = dZ*(np.arange(imgN)-(imgN-1)/2)
     imgs = []
     
+    print deltas
+    
     for d in deltas:
-        tempCsi=qpm.propagateI(csi,kpq,d,k)
-        tempImg = np.sqrt(np.square(tempCsi.real)+np.square(tempCsi.imag))
-        imgs.append(tempImg)
+        tempCsi=qpm.propagateI(csi,kpq,d,k,True)
+        tempImg = np.square(tempCsi.real)+np.square(tempCsi.imag)
+        imgs.append(I if d==0 else tempImg)
+        #imgs.append(tempImg)
         
     return imgs, phi
+
+
+def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = ''):
+    
+    images, phi = createIMGs(px*n,px*n,dX/n,dZ,b/n,imgNum,l)
+    count = 0
+    bits = bPp
+    
+    for i in images:
+        i = bf.adjustImgRange(i,2**(bits)-200,bits)+150
+        print i.dtype
+        img = im.fromarray(i,'I;'+str(bits))
+        img.save(dir+str(count)+'.tif')
+        count += 1
+        
+    phi = bf.adjustImgRange(phi,255,8)
+    misc.imsave(dir+'phi'+'.tif',phi.astype(np.uint8))
 	
 
 if __name__== '__main__':
     
     n = float(sys.argv[1]) if len(sys.argv)>1 else 2
-    images, phi = createIMGs(193*n,193*n,(5.182e-7)/n,5e-7,0.045/n,5,632.8*10**-9)
-    count = 0
-    bits = 16
-    
-    #(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample])
-    
-    for i in images:
-        #i = adjustImgRange(i,2**(8)-1,8)
-        print np.max(i)
-        print np.min(i)
-        print np.mean(i)
-        print np.median(i)
-        i = bf.adjustImgRange(i,2**(bits)-200,bits)+150
-        print i.dtype
-        img = im.fromarray(i,'I;'+str(bits))#.astype(imgTypes[bits]))
-        #		(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample])
-        img.save(str(count)+'.tif')
-        count += 1
-        
-    phi = bf.adjustImgRange(phi,255,8)
-    misc.imsave('phi'+'.tif',phi.astype(np.uint8))
+    createNstore(n,193,5.182e-7,100000000000e-7,0.045,5,632.8*10**-9,16)
 

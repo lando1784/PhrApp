@@ -205,9 +205,9 @@ def myGuoBaoMax(MstList):
 def adjustImgRange(img,newMax,bits = None):
         
         currImgMax = np.max(img)
-        currImgMin = np.min(img)
+        currImgMin = np.min(img) if np.min(img) < currImgMax else 0   
         
-        newImg = ((img-float(currImgMin))/(float(currImgMax)-float(currImgMin)))*newMax
+        newImg = (img-float(currImgMin))/((float(currImgMax)-float(currImgMin)))*(newMax if np.min(img) < currImgMax else 0.5*newMax) 
         
         if bits == None:
             return newImg
