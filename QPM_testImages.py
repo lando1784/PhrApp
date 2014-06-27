@@ -26,12 +26,9 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
     dFx = 1/(dx*pxX)
     dFy = 1/(dx*pxY)
     
-    kx = np.arange(-pxX/2,pxX/2)*dFx
-    ky = np.arange(-pxY/2,pxY/2)*dFy
+    #kx = np.arange(-pxX/2,pxX/2)*dFx
+    #ky = np.arange(-pxY/2,pxY/2)*dFy
     
-#	kx = kx.T*np.matrix(np.ones(shape=[1,pxY]))
-#	kx = np.float64(kx.T)
-#	ky = np.float64(ky.T*np.matrix(np.ones(shape=[1,pxX])))
     #kpq = np.zeros((pxY,pxX))
     kx,ky = qpm.kCoordsPrev(pxY,pxX,dx)
     
@@ -50,12 +47,10 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
             #kpq[r,c] = kx[c]**2+ky[r]**2
             I[r,c]= 1.0-0.9*( gaussian(r,c,r1,c1,b) + gaussian(r,c,r2,c2,b)) 
             #I[r,c]= 1.0-0.9*(np.exp(-1*(b**2)*((c-c1)**2+(r-r1)**2))+np.exp(-1*(b**2)*((c-c2)**2+(r-r2)**2)))
-    print np.min(I)
     I -= np.min(I)
     phi = 0.95*((2*np.pi/0.9)*(1.0-I)-np.pi)
-    #I = np.ones((pxY,pxX))*128
-    print np.shape(I)
     csi = np.sqrt(I)*(np.cos(phi)+1j*np.sin(phi))
+    #csi = np.sqrt(I)*np.exp(phi*1j)
     
     deltas = dZ*(np.arange(imgN)-(imgN-1)/2)
     imgs = []
@@ -65,8 +60,10 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
     for d in deltas:
         tempCsi=qpm.propagateI(csi,kpq,d,k,True)
         tempImg = np.square(tempCsi.real)+np.square(tempCsi.imag)
-        imgs.append(I if d==0 else tempImg)
-        #imgs.append(tempImg)
+        #imgs.append(np.square(csi.real)+np.square(csi.imag) if d==0 else tempImg)
+        imgs.append(tempImg)
+        
+    imgs.append(I)
         
     return imgs, phi
 
@@ -78,9 +75,12 @@ def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = ''):
     bits = bPp
     
     for i in images:
-        i = bf.adjustImgRange(i,2**(bits)-200,bits)+150
+        i = bf.adjustImgRange(i,2**(bits)-(2**(bits)/8),bits)+(2**(bits)/10)
         print i.dtype
-        img = im.fromarray(i,'I;'+str(bits))
+        try:
+            img = im.fromarray(i,'I;'+str(bits))
+        except:
+            img = im.fromarray(i)
         img.save(dir+str(count)+'.tif')
         count += 1
         
@@ -91,5 +91,5 @@ def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = ''):
 if __name__== '__main__':
     
     n = float(sys.argv[1]) if len(sys.argv)>1 else 2
-    createNstore(n,193,5.182e-7,100000000000e-7,0.045,5,632.8*10**-9,16)
+    createNstore(n,193,5.182e-7,5e-7,0.045,5,632.8*10**-9,16)
 

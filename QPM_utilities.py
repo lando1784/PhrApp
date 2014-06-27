@@ -16,7 +16,7 @@ def myFFT2(signal,center = True):
 
 def myIFFT2(Fsignal,center = True):
     
-    result = fft.ifft2(fft.ifftshift(Fsignal)) if center else fft.ifftshift(Fsignal)
+    result = fft.ifft2(fft.ifftshift(Fsignal)) if center else fft.ifft2(Fsignal)
     
     return result
 
@@ -155,7 +155,9 @@ def ZaxisDerive_v3(imgs,bestFocusInd,degree,z=None):
 def propagateI(csiK, kpq, delta, k, ctr):
     
     FcsiK = myFFT2(csiK,ctr)
-    coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)
+    print delta == 0
+    coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)# if delta!=0 else bf.np.ones(bf.np.shape(kpq))
+    print coeffExp
     FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
     csiKp1 = myIFFT2(FcsiKp1,ctr)
     

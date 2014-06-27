@@ -100,7 +100,7 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
     IfftFiltX = myIFFT2(FilterX,CTR)
     divX = bf.np.divide(IfftFiltX,Ifuoco)
-    #divX[fireInd] = bf.np.max(divX[bf.np.where(Ifuoco != 0)])
+    divX[fireInd] = bf.np.max(divX[bf.np.where(Ifuoco != 0)])
     FFTdivX = myFFT2(divX,CTR)
     mulX = bf.np.multiply(bf.np.multiply(Wx,kx),FFTdivX)
     IFFTmulX = -1*myIFFT2(mulX,CTR)
@@ -108,15 +108,13 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
     IfftFiltY = myIFFT2(FilterY,CTR)
     divY = bf.np.divide(IfftFiltY,Ifuoco)
-    #divY[fireInd] = bf.np.max(divY[bf.np.where(Ifuoco != 0)])
+    divY[fireInd] = bf.np.max(divY[bf.np.where(Ifuoco != 0)])
     FFTdivY = myFFT2(divY,CTR)
     mulY = bf.np.multiply(bf.np.multiply(Wy,ky),FFTdivY)
     IFFTmulY = -1*myIFFT2(mulY,CTR)
     
     sumMul = IFFTmulX + IFFTmulY
     realSum = bf.np.real(sumMul)
-
-    #realSum = bf.np.unwrap(realSum)
 
     if not onlyAguess:
         rSmax = bf.np.max(realSum)

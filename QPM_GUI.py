@@ -320,6 +320,7 @@ class MainFrame(wx.Frame):
             zN = float(self.zStepNum.GetValue())*(10**(-9))
         else:
             zN = float(self.zStepNum.GetValue())*(10**(-9))
+            
         R,C = bf.np.shape(self.images[self.bestFocusIndex])
         deltaX = (float(self.xStepNum.GetValue())*(10**(-9)))
         if self.alphaFuncCbBox.GetSelection() is not 0:
@@ -342,7 +343,7 @@ class MainFrame(wx.Frame):
                 self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
             else:
-                temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,'Test',float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
+                temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
                 self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
         
@@ -350,7 +351,7 @@ class MainFrame(wx.Frame):
         nS = float(self.nSampleNum.GetValue())
         nM = float(self.nMedNum.GetValue())
         #self.radToHeight = qpm.lamD*(pixelToRad/(2*bf.np.pi))*(nS-nM)
-        self.radToHeight = pixelToRad/(qpm.kD*(nS-nM))
+        self.radToHeight = pixelToRad/(kN*(nS-nM))
         print self.radToHeight
         myCursor= wx.StockCursor(wx.CURSOR_ARROW)
         self.SetCursor(myCursor)
