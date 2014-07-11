@@ -155,9 +155,7 @@ def ZaxisDerive_v3(imgs,bestFocusInd,degree,z=None):
 def propagateI(csiK, kpq, delta, k, ctr):
     
     FcsiK = myFFT2(csiK,ctr)
-    print delta == 0
     coeffExp = bf.np.exp((-1j*delta/(2*k))*kpq)# if delta!=0 else bf.np.ones(bf.np.shape(kpq))
-    print coeffExp
     FcsiKp1 = bf.np.multiply(coeffExp,FcsiK)
     csiKp1 = myIFFT2(FcsiKp1,ctr)
     

@@ -388,6 +388,12 @@ class MainFrame(wx.Frame):
         
         
         #bf.sp.misc.imsave(*paramsSet[self.fileExtCbBox.GetSelection()])
+        
+        errFile = open(self.resImgDirTxt.GetValue() + os.sep + 'errFile.txt','w')
+        for e in self.errList:
+            errFile.write(str(e)+'\n')
+        errFile.close()
+        
         img = bf.Image.fromarray(*paramsSet[self.fileExtCbBox.GetSelection()])
         img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
             

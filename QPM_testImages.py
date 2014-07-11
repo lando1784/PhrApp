@@ -52,7 +52,7 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
     csi = np.sqrt(I)*(np.cos(phi)+1j*np.sin(phi))
     #csi = np.sqrt(I)*np.exp(phi*1j)
     
-    deltas = dZ*(np.arange(imgN)-(imgN-1)/2)
+    deltas = -1*dZ*(np.arange(imgN)-(imgN-1)/2)
     imgs = []
     
     print deltas
@@ -73,6 +73,7 @@ def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = ''):
     images, phi = createIMGs(px*n,px*n,dX/n,dZ,b/n,imgNum,l)
     count = 0
     bits = bPp
+    lenName = len(images)
     
     for i in images:
         i = bf.adjustImgRange(i,2**(bits)-(2**(bits)/8),bits)+(2**(bits)/10)
@@ -81,15 +82,20 @@ def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = ''):
             img = im.fromarray(i,'I;'+str(bits))
         except:
             img = im.fromarray(i)
-        img.save(dir+str(count)+'.tif')
+        name = (lenName-len(str(count)))*'0'+str(count)
+        img.save(dir+name+'.tif')
         count += 1
         
-    phi = bf.adjustImgRange(phi,255,8)
-    misc.imsave(dir+'phi'+'.tif',phi.astype(np.uint8))
+    phi = bf.adjustImgRange(phi,2**(bits)-1,bits)
+    try:
+        imgP = im.fromarray(phi,'I;'+str(bits))
+    except:
+        imgP = im.fromarray(phi)
+    imgP.save(dir+'phi'+'.tif')
 	
 
 if __name__== '__main__':
     
     n = float(sys.argv[1]) if len(sys.argv)>1 else 2
-    createNstore(n,193,5.182e-7,5e-7,0.045,5,632.8*10**-9,16)
+    createNstore(n,193,5.182e-7,25e-7,0.045,21,632.8*10**-9,16)
 
