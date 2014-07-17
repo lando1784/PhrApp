@@ -1,5 +1,6 @@
 from QPM_utilities import *
 from scipy import rand
+from PIL import Image as im
 
 lamD = 533.0 * (10**-9)
 kD = (2 * bf.np.pi) / lamD
@@ -141,27 +142,22 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
     kx,ky = kCoords(R,C,dx)
     
     kpq = bf.np.square(kx) + bf.np.square(ky) 
-    
-#    if N%2 == 0:
-#        return []
 
 #######################################################
-    cont = 0
-
-    for i in images:
-        images[cont] = bf.adjustImgRange(i,1)
-        cont += 1
+    
+    I = bf.adjustImgRange(images[(N-1)/2],1)
+    
 #######################################################
         
     sqrtImgs = bf.np.sqrt(images)
     
     if initPhase == None:
-        #phiGuess = bf.np.zeros((R,C))
-        phiGuess = rand(R,C)*bf.np.pi*2
+        phiGuess = bf.np.zeros((R,C))
+        #phiGuess = rand(R,C)*bf.np.pi*2
         #phiGuess = bf.np.ones((R,C))*bf.np.pi*2
         
     elif initPhase == 'Test':
-        phiGuess = phi = 0.95*((2*bf.np.pi/0.9)*(1.0-images[(N-1)/2])-bf.np.pi)
+        phiGuess = phi = 0.95*((2*bf.np.pi/0.9)*(1.0-I)-bf.np.pi)
     else: 
         phiGuess = initPhase
         
@@ -173,38 +169,50 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
     
     errList = []
     
-    #deltas = [(x-(N-N%2)/2)*dz for x in propList] # Mio
+    deltas = [(x-(N-N%2)/2)*dz*-1 for x in propList] # Mio
     
     err = bf.np.sum(images[(N-N%2)/2])**2
-    csiK = bf.np.multiply(sqrtImgs[(N-N%2)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j)) # Normale
+    #csiK = bf.np.multiply(sqrtImgs[(N-N%2)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j)) # Normale
     
     while err > errLim and currIter < iterLim:
         
         print currIter
         
         for ind in range(len(propList)-1):
-            #csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j)) # Mio
-            #delta = deltas[ind+1] # Mio
-            delta = dz if propList[ind] < propList[ind+1] else -1*dz # Normale
+            csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j)) # Mio
+            delta = deltas[ind+1] # Mio
+            #delta = dz if propList[ind] < propList[ind+1] else -1*dz # Normale
             csiKp1 = propagateI(csiK,kpq,delta,k,CTR)
             csiKp1I = bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)
             csiKp1P = bf.np.arctan2(csiKp1.imag,csiKp1.real)
             
-            if bf.np.equal(csiKp1I,images[propList[ind+1]]).all() == False: # Normale
-                csiK = bf.np.multiply(sqrtImgs[propList[ind+1]],(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j)) # Normale
-            else: # Normale
-                csiK = csiKp1 # Normale
-            #err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]]))) # Mio
+            
+            ###################################################################################
+            
+            #phi = bf.adjustImgRange(csiKp1P,2**(16)-1,16)
+            #imgP = im.fromarray(phi,'I;'+str(16))
+            #imgP.save('phi_'+str(currIter)+'_'+str(ind)+'.tif')
+            
+            ###################################################################################
+            
+            #if bf.np.equal(csiKp1I,images[propList[ind+1]]).all() == False: # Normale
+            #    csiK = bf.np.multiply(sqrtImgs[propList[ind+1]],(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j)) # Normale
+            #else: # Normale
+            #    csiK = csiKp1 # Normale
+            err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)-images[propList[ind+1]]))) # Mio
             
             #print err # Mio
             
-            #if err > errLim: # Mio
-            #    csiKp1cR = sqrtImgs[propList[ind+1]] # Mio
-            #    csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j)) # Mio
-            #    phiGuess = propagateBack(csiKp1c, kpq, delta, k, CTR) # Mio
+            if err > errLim: # Mio
+                csiKp1cR = sqrtImgs[propList[ind+1]] # Mio
+                csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j)) # Mio
+                #phiGuess = propagateBack(csiKp1c, kpq, delta, k, CTR) # Mio
+                csiKc = propagateI(csiKp1c,kpq,-1*delta,k,CTR) # Mio ma boh...
+                normCsiKc = bf.np.divide(csiKc,sqrtImgs[(N-1)/2]+0.0000001) # Mio ma boh...
+                phiGuess = bf.np.arctan2(normCsiKc.imag,normCsiKc.real) # Mio ma boh...
                 
-            #else: # Mio
-            #    pass # Mio
+            else: # Mio
+                pass # Mio
         
         err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]])))
         

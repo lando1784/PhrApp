@@ -97,5 +97,5 @@ def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = ''):
 if __name__== '__main__':
     
     n = float(sys.argv[1]) if len(sys.argv)>1 else 2
-    createNstore(n,193,5.182e-7,25e-7,0.045,21,632.8*10**-9,16)
+    createNstore(n,193,5.182e-7,5e-7,0.045,21,632.8*10**-9,16)
 
