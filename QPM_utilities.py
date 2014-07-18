@@ -4,6 +4,7 @@ import platform #di sistema
 import sys
 import cmath
 import math
+from scipy.interpolate import interp1d
 
 
 
@@ -171,3 +172,27 @@ def propagateBack(csiKp1c, kpq, delta, k,ctr):
     phiGuess = bf.np.arctan2(csiKc.imag,csiKc.real)
     
     return phiGuess
+
+def make2dList(rows, cols):
+    a=[]
+    for row in xrange(rows): a += [[0]*cols]
+    return a
+
+def interpImgs(images,dz):
+    
+    N,R,C = bf.np.shape(images)
+    imgs = bf.np.array(images)
+    Z = (bf.np.arange(N)-(N-N%2)/2)*dz
+    Itp = make2dList(R,C)
+    
+    
+    for r in range(R):
+        for c in range(C):
+            Itp[r][c] = interp1d(Z, imgs[:,r,c], kind='cubic')
+            
+    return Itp
+    
+    
+    
+    
+    

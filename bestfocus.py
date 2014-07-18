@@ -339,32 +339,3 @@ if __name__=='__main__':
     print 'Not for Standalone use'
     
     sys.exit(0)
-    
-    mypath='/home/lando/Documenti/Lavoro/Octave/neuroi_15/'
-    mypath2='/home/lando/Documenti/Lavoro/Octave/diaframma-aperto-5-um/'
-    mypath3='/home/lando/Documenti/Lavoro/Octave/EGbone60x2p5umAperto/'
-    mypath4='/home/lando/Documenti/Lavoro/Octave/3_20x/'
-    mypath5='/home/lando/Documenti/Lavoro/Octave/sandro/a/'
-    
-    usedpath=mypath5
-    
-    
-    onlyfiles = [ f for f in listdir(usedpath) if isfile(join(usedpath,f)) ]
-    
-    imgPaths=[]
-    
-    for name in onlyfiles:
-        imgPaths.append(usedpath+name)
-
-    imgPaths.sort()
-    testFocusInd = findBestFocus(imgPaths)
-    testFocusInd2 = findBestFocusHist(imgPaths)
-    testFocusInd3 = findBestFocusGradientX(imgPaths)
-    
-    print testFocusInd, testFocusInd2, testFocusInd3
-    
-    testFocusImg = cv2.imread(imgPaths[testFocusInd])
-    
-    print imgPaths[testFocusInd2]
-    
-    
