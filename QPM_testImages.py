@@ -8,6 +8,7 @@ import matplotlib.pyplot as plt
 import sys
 import QPM_algorithm as qpm
 import bestfocus as bf
+import os
 
 imgTypes = {8:np.uint8,16:np.uint16,32:np.uint32,12:np.uint16}
 
@@ -63,39 +64,37 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
         #imgs.append(np.square(csi.real)+np.square(csi.imag) if d==0 else tempImg)
         imgs.append(tempImg)
         
-    imgs.append(I)
-        
     return imgs, phi
 
 
-def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = ''):
+def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir):
     
     images, phi = createIMGs(px*n,px*n,dX/n,dZ,b/n,imgNum,l)
     count = 0
     bits = bPp
-    lenName = len(images)
+    lenName = len(str(len(images)))
     
     for i in images:
-        i = bf.adjustImgRange(i,2**(bits)-(2**(bits)/8),bits)+(2**(bits)/10)
+        i = qpm.adjustImgRange(i,2**(bits)-(2**(bits)/8),bits)+(2**(bits)/10)
         print i.dtype
         try:
             img = im.fromarray(i,'I;'+str(bits))
         except:
             img = im.fromarray(i)
         name = (lenName-len(str(count)))*'0'+str(count)
-        img.save(dir+name+'.tif')
+        img.save(dir+os.sep+name+'.tif')
         count += 1
         
-    phi = bf.adjustImgRange(phi,2**(bits)-1,bits)
+    phi = qpm.adjustImgRange(phi,2**(bits)-1,bits)
     try:
         imgP = im.fromarray(phi,'I;'+str(bits))
     except:
         imgP = im.fromarray(phi)
-    imgP.save(dir+'phi'+'.tif')
+    imgP.save(dir+os.sep+'phi'+'.tif')
 	
 
 if __name__== '__main__':
     
     n = float(sys.argv[1]) if len(sys.argv)>1 else 2
-    createNstore(n,193,5.182e-7,5e-7,0.045,21,632.8*10**-9,16)
+    createNstore(n,193,5.182e-7,5e-3,0.045,21,632.8*10**-9,16,'')
 

@@ -3,7 +3,7 @@ from scipy import rand
 from PIL import Image as im
 
 lamD = 533.0 * (10**-9)
-kD = (2 * bf.np.pi) / lamD
+kD = (2 * np.pi) / lamD
 
 
 zD = 500 * (10**-9)
@@ -22,43 +22,43 @@ def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCo
     
     kx,ky = kCoords(R,C,1)
     
-    kx[bf.np.where(kx == 0)] = zeroSubst
-    ky[bf.np.where(ky == 0)] = zeroSubst
-    fireInd=bf.np.where(Ifuoco == 0)
-    Ifuoco=bf.np.float64(Ifuoco)
+    kx[np.where(kx == 0)] = zeroSubst
+    ky[np.where(ky == 0)] = zeroSubst
+    fireInd=np.where(Ifuoco == 0)
+    Ifuoco=np.float64(Ifuoco)
     
-    V = bf.np.square(kx)+bf.np.square(ky)
+    V = np.square(kx)+np.square(ky)
     
-    alpha = bf.np.max(V)*alphaCorr
+    alpha = np.max(V)*alphaCorr
     
     kxCorr = WxyFilterDenCorr(kx, alpha, fselect)
     kyCorr = WxyFilterDenCorr(ky, alpha, fselect)
     
-    Wx = bf.np.divide(V,(bf.np.square(V)+kxCorr))
-    Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
+    Wx = np.divide(V,(np.square(V)+kxCorr))
+    Wy = np.divide(V,(np.square(V)+kyCorr))
     
-    FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
+    FilterX = np.multiply(np.multiply(kx,Wx),ZderFFT)
     IfftFiltX = myIFFT2(FilterX,CTR)
-    divX = bf.np.divide(IfftFiltX,Ifuoco)
-    divX[fireInd] = bf.np.max(divX[bf.np.where(Ifuoco != 0)])
+    divX = np.divide(IfftFiltX,Ifuoco)
+    divX[fireInd] = np.max(divX[np.where(Ifuoco != 0)])
     FFTdivX = myFFT2(divX,CTR)
-    mulX = bf.np.multiply(bf.np.multiply(Wx,kx),FFTdivX)
+    mulX = np.multiply(np.multiply(Wx,kx),FFTdivX)
     IFFTmulX = myIFFT2(mulX,CTR)
     IFFTmulX = -k*(1/z)*(1/((C*deltax)**2))*IFFTmulX
     
-    FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
+    FilterY = np.multiply(np.multiply(ky,Wy),ZderFFT)
     IfftFiltY = myIFFT2(FilterY,CTR)
-    divY = bf.np.divide(IfftFiltY,Ifuoco)
-    divY[fireInd] = bf.np.max(divY[bf.np.where(Ifuoco != 0)])
+    divY = np.divide(IfftFiltY,Ifuoco)
+    divY[fireInd] = np.max(divY[np.where(Ifuoco != 0)])
     FFTdivY = myFFT2(divY,CTR)
-    mulY = bf.np.multiply(bf.np.multiply(Wy,ky),FFTdivY)
+    mulY = np.multiply(np.multiply(Wy,ky),FFTdivY)
     IFFTmulY = myIFFT2(mulY,CTR)
     IFFTmulY = -k*(1/z)*(1/((R*deltax)**2))*IFFTmulY
     
     sumMul = IFFTmulX + IFFTmulY
-    realSum = bf.np.real(sumMul)
-    rSmax = bf.np.max(realSum)
-    rSmin = bf.np.min(realSum)
+    realSum = np.real(sumMul)
+    rSmax = np.max(realSum)
+    rSmin = np.min(realSum)
 
     
     rangeCorrector = 2**imgBitsPerPixel-1
@@ -80,54 +80,54 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     #kx,ky = kCoordsPrev(R,C,dx)
     kx,ky = kCoords(R,C,dx)
     
-    kx[bf.np.where(kx == 0)] = zeroSubst
-    ky[bf.np.where(ky == 0)] = zeroSubst
-    fireInd=bf.np.where(Ifuoco == 0)
-    Ifuoco=bf.np.float64(Ifuoco)
+    kx[np.where(kx == 0)] = zeroSubst
+    ky[np.where(ky == 0)] = zeroSubst
+    fireInd=np.where(Ifuoco == 0)
+    Ifuoco=np.float64(Ifuoco)
     
-    V = bf.np.square(kx)+bf.np.square(ky)
+    V = np.square(kx)+np.square(ky)
     
-    alpha = bf.np.max(V)*alphaCorr
+    alpha = np.max(V)*alphaCorr
     
     kxCorr = WxyFilterDenCorr(kx, alpha, fselect)
     kyCorr = WxyFilterDenCorr(ky, alpha, fselect)
     
     if len(alpha) == 1 and alpha[0] == 0.0:
-        oneone = bf.np.matrix(bf.np.ones((R,C)))
-        Wx = Wy = bf.np.divide(oneone,V)
+        oneone = np.matrix(np.ones((R,C)))
+        Wx = Wy = np.divide(oneone,V)
     else:
-        Wx = bf.np.divide(V,(bf.np.square(V)+kxCorr))
-        Wy = bf.np.divide(V,(bf.np.square(V)+kyCorr))
+        Wx = np.divide(V,(np.square(V)+kxCorr))
+        Wy = np.divide(V,(np.square(V)+kyCorr))
     
-    FilterX = bf.np.multiply(bf.np.multiply(kx,Wx),ZderFFT)
+    FilterX = np.multiply(np.multiply(kx,Wx),ZderFFT)
     IfftFiltX = myIFFT2(FilterX,CTR)
-    divX = bf.np.divide(IfftFiltX,Ifuoco)
-    divX[fireInd] = bf.np.max(divX[bf.np.where(Ifuoco != 0)])
+    divX = np.divide(IfftFiltX,Ifuoco)
+    divX[fireInd] = np.max(divX[np.where(Ifuoco != 0)])
     FFTdivX = myFFT2(divX,CTR)
-    mulX = bf.np.multiply(bf.np.multiply(Wx,kx),FFTdivX)
+    mulX = np.multiply(np.multiply(Wx,kx),FFTdivX)
     IFFTmulX = -1*myIFFT2(mulX,CTR)
     
-    FilterY = bf.np.multiply(bf.np.multiply(ky,Wy),ZderFFT)
+    FilterY = np.multiply(np.multiply(ky,Wy),ZderFFT)
     IfftFiltY = myIFFT2(FilterY,CTR)
-    divY = bf.np.divide(IfftFiltY,Ifuoco)
-    divY[fireInd] = bf.np.max(divY[bf.np.where(Ifuoco != 0)])
+    divY = np.divide(IfftFiltY,Ifuoco)
+    divY[fireInd] = np.max(divY[np.where(Ifuoco != 0)])
     FFTdivY = myFFT2(divY,CTR)
-    mulY = bf.np.multiply(bf.np.multiply(Wy,ky),FFTdivY)
+    mulY = np.multiply(np.multiply(Wy,ky),FFTdivY)
     IFFTmulY = -1*myIFFT2(mulY,CTR)
     
     sumMul = IFFTmulX + IFFTmulY
-    realSum = bf.np.real(sumMul)
+    realSum = np.real(sumMul)
 
     if not onlyAguess:
-        rSmax = bf.np.max(realSum)
-        rSmin = bf.np.min(realSum)
+        rSmax = np.max(realSum)
+        rSmin = np.min(realSum)
     
         rangeCorrector = 2**imgBitsPerPixel-1
     
         pixelToRad = (rSmax-rSmin)/rangeCorrector
     
         #rSnorm = ((realSum-rSmin)/(rSmax-rSmin)*float(rangeCorrector)).astype(int)
-        rSnorm =bf.adjustImgRange(realSum,rangeCorrector,imgBitsPerPixel)
+        rSnorm =adjustImgRange(realSum,rangeCorrector,imgBitsPerPixel)
     
         return rSnorm, pixelToRad
     
@@ -137,27 +137,27 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
 
 def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, iterLim = 20):
     
-    N,R,C = bf.np.shape(images)
+    N,R,C = np.shape(images)
     
     kx,ky = kCoords(R,C,dx)
     
-    kpq = bf.np.square(kx) + bf.np.square(ky) 
+    kpq = np.square(kx) + np.square(ky) 
 
 #######################################################
     
-    I = bf.adjustImgRange(images[(N-1)/2],1)
+    I = adjustImgRange(images[(N-1)/2],1)
     
 #######################################################
         
-    sqrtImgs = bf.np.sqrt(images)
+    sqrtImgs = np.sqrt(images)
     
     if initPhase == None:
-        phiGuess = bf.np.zeros((R,C))
-        #phiGuess = rand(R,C)*bf.np.pi*2
-        #phiGuess = bf.np.ones((R,C))*bf.np.pi*2
+        phiGuess = np.zeros((R,C))
+        #phiGuess = rand(R,C)*np.pi*2
+        #phiGuess = np.ones((R,C))*np.pi*2
         
     elif initPhase == 'Test':
-        phiGuess = phi = 0.95*((2*bf.np.pi/0.9)*(1.0-I)-bf.np.pi)
+        phiGuess = phi = 0.95*((2*np.pi/0.9)*(1.0-I)-np.pi)
     else: 
         phiGuess = initPhase
         
@@ -171,57 +171,57 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
     
     deltas = [(x-(N-N%2)/2)*dz*-1 for x in propList] # Mio
     
-    err = bf.np.sum(images[(N-N%2)/2])**2
-    #csiK = bf.np.multiply(sqrtImgs[(N-N%2)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j)) # Normale
+    err = np.sum(images[(N-N%2)/2])**2
+    #csiK = np.multiply(sqrtImgs[(N-N%2)/2],(np.cos(phiGuess) + np.sin(phiGuess)*1j)) # Normale
     
     while err > errLim and currIter < iterLim:
         
         print currIter
         
         for ind in range(len(propList)-1):
-            csiK = bf.np.multiply(sqrtImgs[(N-1)/2],(bf.np.cos(phiGuess) + bf.np.sin(phiGuess)*1j)) # Mio
+            csiK = np.multiply(sqrtImgs[(N-1)/2],(np.cos(phiGuess) + np.sin(phiGuess)*1j)) # Mio
             delta = deltas[ind+1] # Mio
             #delta = dz if propList[ind] < propList[ind+1] else -1*dz # Normale
             csiKp1 = propagateI(csiK,kpq,delta,k,CTR)
-            csiKp1I = bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)
-            csiKp1P = bf.np.arctan2(csiKp1.imag,csiKp1.real)
+            csiKp1I = np.square(csiKp1.real)+np.square(csiKp1.imag)
+            csiKp1P = np.arctan2(csiKp1.imag,csiKp1.real)
             
             
             ###################################################################################
             
-            #phi = bf.adjustImgRange(csiKp1P,2**(16)-1,16)
+            #phi = adjustImgRange(csiKp1P,2**(16)-1,16)
             #imgP = im.fromarray(phi,'I;'+str(16))
             #imgP.save('phi_'+str(currIter)+'_'+str(ind)+'.tif')
             
             ###################################################################################
             
-            #if bf.np.equal(csiKp1I,images[propList[ind+1]]).all() == False: # Normale
-            #    csiK = bf.np.multiply(sqrtImgs[propList[ind+1]],(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j)) # Normale
+            #if np.equal(csiKp1I,images[propList[ind+1]]).all() == False: # Normale
+            #    csiK = np.multiply(sqrtImgs[propList[ind+1]],(np.cos(csiKp1P) + np.sin(csiKp1P)*1j)) # Normale
             #else: # Normale
             #    csiK = csiKp1 # Normale
-            err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiKp1.real)+bf.np.square(csiKp1.imag)-images[propList[ind+1]]))) # Mio
+            err = (1.0/(R*C))*float(np.sum(np.square(np.square(csiKp1.real)+np.square(csiKp1.imag)-images[propList[ind+1]]))) # Mio
             
             #print err # Mio
             
             if err > errLim: # Mio
                 csiKp1cR = sqrtImgs[propList[ind+1]] # Mio
-                csiKp1c = bf.np.multiply(csiKp1cR,(bf.np.cos(csiKp1P) + bf.np.sin(csiKp1P)*1j)) # Mio
+                csiKp1c = np.multiply(csiKp1cR,(np.cos(csiKp1P) + np.sin(csiKp1P)*1j)) # Mio
                 #phiGuess = propagateBack(csiKp1c, kpq, delta, k, CTR) # Mio
                 csiKc = propagateI(csiKp1c,kpq,-1*delta,k,CTR) # Mio ma boh...
-                normCsiKc = bf.np.divide(csiKc,sqrtImgs[(N-1)/2]+0.0000001) # Mio ma boh...
-                phiGuess = bf.np.arctan2(normCsiKc.imag,normCsiKc.real) # Mio ma boh...
+                normCsiKc = np.divide(csiKc,sqrtImgs[(N-1)/2]+0.0000001) # Mio ma boh...
+                phiGuess = np.arctan2(normCsiKc.imag,normCsiKc.real) # Mio ma boh...
                 
             else: # Mio
                 pass # Mio
         
-        err = (1.0/(R*C))*float(bf.np.sum(bf.np.square(bf.np.square(csiK.real)+bf.np.square(csiK.imag)-images[propList[ind+1]])))
+        err = (1.0/(R*C))*float(np.sum(np.square(np.square(csiK.real)+np.square(csiK.imag)-images[propList[ind+1]])))
         
         errList.append(err)
         
         print err
         currIter += 1
     
-    phiGuess = bf.np.arctan2(csiK.imag,csiK.real)
+    phiGuess = np.arctan2(csiK.imag,csiK.real)
     
     return phiGuess,errList
 

@@ -3,6 +3,8 @@ import os #di sistema
 #import matplotlib #ok
 #from matplotlib.figure import Figure #ok
 import QPM_algorithm as qpm #da progetto
+import QPM_utilities as qu
+import QPM_testImages as qtest
 import bestfocus as bf # da progetto
 import sys # di sistema
 import tiffClass as tc #da progetto
@@ -64,8 +66,8 @@ class MainFrame(wx.Frame):
             self.currImgCbBox.SetSelection(0)
             for path in self.imagePaths:
                 tempImg = bf.Image.open(path)
-                imgPreData = bf.np.array(tempImg.getdata())
-                if len(bf.np.shape(imgPreData)) > 1:
+                imgPreData = qu.np.array(tempImg.getdata())
+                if len(qu.np.shape(imgPreData)) > 1:
                     imgPreData = imgPreData[:,1]
                 data = imgPreData.reshape(tempImg.size[::-1])
                 if self.imgInfo.BitsPerSample == -1 or self.imgInfo.BitsPerSample == 0 or self.imgInfo.BitsPerSample > 32:
@@ -74,7 +76,7 @@ class MainFrame(wx.Frame):
                     self.BitsPerSample = 16
                 else:
                     self.BitsPerSample = self.imgInfo.BitsPerSample
-                data = data.astype(bf.imgTypes[self.BitsPerSample])
+                data = data.astype(qu.imgTypes[self.BitsPerSample])
                 self.images.append(data)
                 self.currImgCbBox.Insert(path,cont)
                 cont+=1
@@ -299,10 +301,11 @@ class MainFrame(wx.Frame):
         
     def onCreate3D(self, event):
         
-        kN = (2 * bf.np.pi) / (float(self.lambdaNum.GetValue())*10**(-9))
+        kN = (2 * qu.np.pi) / (float(self.lambdaNum.GetValue())*10**(-9))
         myCursor= wx.StockCursor(wx.CURSOR_WAIT)
         self.SetCursor(myCursor)
         self.degree = None
+        self.errList = None
         
         if polyfitDer and self.algCbBox.GetSelection() is not 1:
             degDef = 3 if len(self.images)>3 else len(self.images)-1
@@ -321,12 +324,12 @@ class MainFrame(wx.Frame):
         else:
             zN = float(self.zStepNum.GetValue())*(10**(-9))
             
-        R,C = bf.np.shape(self.images[self.bestFocusIndex])
+        R,C = qu.np.shape(self.images[self.bestFocusIndex])
         deltaX = (float(self.xStepNum.GetValue())*(10**(-9)))
         if self.alphaFuncCbBox.GetSelection() is not 0:
-            alphaPar = bf.np.array([float(self.alphaNum.GetValue()),float(self.alphaNum2.GetValue())])
+            alphaPar = qu.np.array([float(self.alphaNum.GetValue()),float(self.alphaNum2.GetValue())])
         else:
-            alphaPar = bf.np.array([float(self.alphaNum.GetValue())])
+            alphaPar = qu.np.array([float(self.alphaNum.GetValue())])
         
         if self.algCbBox.GetSelection() == 0:
             if dimRet:
@@ -340,17 +343,17 @@ class MainFrame(wx.Frame):
                 else:
                     phaseGuess = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample, onlyAguess = True)
                 temp, self.errList = qpm.AI(self.images,zN,deltaX,kN,phaseGuess,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
-                self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
+                self.res3Dimage = qu.adjustImgRange(temp,2**self.BitsPerSample-1).astype(qu.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
             else:
                 temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
-                self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
+                self.res3Dimage = qu.adjustImgRange(temp,2**self.BitsPerSample-1).astype(qu.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
         
         print pixelToRad
         nS = float(self.nSampleNum.GetValue())
         nM = float(self.nMedNum.GetValue())
-        #self.radToHeight = qpm.lamD*(pixelToRad/(2*bf.np.pi))*(nS-nM)
+        #self.radToHeight = qpm.lamD*(pixelToRad/(2*qu.np.pi))*(nS-nM)
         self.radToHeight = pixelToRad/(kN*(nS-nM))
         print self.radToHeight
         myCursor= wx.StockCursor(wx.CURSOR_ARROW)
@@ -369,17 +372,17 @@ class MainFrame(wx.Frame):
                    str(polyfitDer) + '\nWavelength: ' + self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
         if self.algCbBox.GetSelection() != 0:
             comment = comment+str('\nMax iter num: ' + self.iterLimNum.GetValue() + '\nMaxError: ' + self.errLimNum.GetValue())
-        paramsSet = ([[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
-                     [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
-                     [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],
+        paramsSet = ([[(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
+                     [(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
+                     [(qu.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],
                      [path3D,''],
                      [path3D,''],
                      [path3D,comment]
                      ]
                      if self.BitsPerSample == 16 else
-                     [[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
-                     [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
-                     [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample])],
+                     [[(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
+                     [(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
+                     [(qu.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample])],
                      [path3D,''],
                      [path3D,''],
                      [path3D,comment]
@@ -389,10 +392,11 @@ class MainFrame(wx.Frame):
         
         #bf.sp.misc.imsave(*paramsSet[self.fileExtCbBox.GetSelection()])
         
-        errFile = open(self.resImgDirTxt.GetValue() + os.sep + 'errFile.txt','w')
-        for e in self.errList:
-            errFile.write(str(e)+'\n')
-        errFile.close()
+        if self.errList:
+            errFile = open(self.resImgDirTxt.GetValue() + os.sep + 'errFile.txt','w')
+            for e in self.errList:
+                errFile.write(str(e)+'\n')
+            errFile.close()
         
         img = bf.Image.fromarray(*paramsSet[self.fileExtCbBox.GetSelection()])
         img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
@@ -400,15 +404,15 @@ class MainFrame(wx.Frame):
         
     def onView3D(self, event):
         
-        bf.sp.misc.imsave('temp.jpg',bf.adjustImgRange(self.res3Dimage,255))
+        bf.sp.misc.imsave('temp.jpg',qu.adjustImgRange(self.res3Dimage,255))
         showME = bf.Image.open('temp.jpg')
         showME.show()
-        showME = bf.np.array(showME.getdata()).reshape(showME.size[::-1])
-        showME = bf.adjustImgRange(showME,255,8)
+        showME = qu.np.array(showME.getdata()).reshape(showME.size[::-1])
+        showME = qu.adjustImgRange(showME,255,8)
         #bf.cv2.imshow('3D image',showME)
-        x = bf.np.arange(bf.np.shape(showME)[0])
-        y = bf.np.arange(bf.np.shape(showME)[1])
-        mlab.surf(x,y,bf.np.array(showME[:,:]))
+        x = qu.np.arange(qu.np.shape(showME)[0])
+        y = qu.np.arange(qu.np.shape(showME)[1])
+        mlab.surf(x,y,qu.np.array(showME[:,:]))
 
     
     def onStartScp(self,event):
@@ -427,7 +431,7 @@ class MainFrame(wx.Frame):
         scriptImagePaths = openFileDialog.GetPaths()
         scriptImagePaths.sort()
         N = len(scriptImagePaths)
-        scriptImagePaths = bf.np.array(scriptImagePaths)
+        scriptImagePaths = qu.np.array(scriptImagePaths)
         ctr = (N-N%2)/2
         
         maxAllowed = 11 if len(scriptImagePaths)>=11 else (7 if len(scriptImagePaths)>=7 else 5)
@@ -445,12 +449,12 @@ class MainFrame(wx.Frame):
         startStep = int(self.zStepNum.GetValue())
         self.bestFocusIndex = (scriptPackLen-scriptPackLen%2)/2
         
-        for n in bf.np.arange(((N-1)-(N-1)%(scriptPackLen-1))/(scriptPackLen-1))+1:
+        for n in qu.np.arange(((N-1)-(N-1)%(scriptPackLen-1))/(scriptPackLen-1))+1:
             
             print n
             
             self.images = []
-            setInd = list((bf.np.arange(scriptPackLen))*n+ctr-((scriptPackLen-scriptPackLen%2)/2)*n)
+            setInd = list((qu.np.arange(scriptPackLen))*n+ctr-((scriptPackLen-scriptPackLen%2)/2)*n)
             self.imagePaths = scriptImagePaths[setInd]
             
             print self.imagePaths
@@ -461,18 +465,18 @@ class MainFrame(wx.Frame):
             
             for path in self.imagePaths:
                 tempImg = bf.Image.open(path)
-                imgPreData = bf.np.array(tempImg.getdata())
-                if len(bf.np.shape(imgPreData)) > 1:
+                imgPreData = qu.np.array(tempImg.getdata())
+                if len(qu.np.shape(imgPreData)) > 1:
                     imgPreData = imgPreData[:,1]
                 data = imgPreData.reshape(tempImg.size[::-1])
                 if self.imgInfo.BitsPerSample == -1 or self.imgInfo.BitsPerSample == 0 or self.imgInfo.BitsPerSample > 32:
                     self.BitsPerSample = 16
                 else:
                     self.BitsPerSample = self.imgInfo.BitsPerSample
-                data = data.astype(bf.imgTypes[self.BitsPerSample])
+                data = data.astype(qu.imgTypes[self.BitsPerSample])
                 self.images.append(data)
                 
-            kN = (2 * bf.np.pi) / (float(self.lambdaNum.GetValue())*10**(-9))
+            kN = (2 * qu.np.pi) / (float(self.lambdaNum.GetValue())*10**(-9))
             myCursor= wx.StockCursor(wx.CURSOR_WAIT)
             self.SetCursor(myCursor)
             self.degree = None
@@ -493,12 +497,12 @@ class MainFrame(wx.Frame):
                 zN = float(self.zStepNum.GetValue())*(10**(-9))
             else:
                 zN = float(self.zStepNum.GetValue())*(10**(-9))
-            R,C = bf.np.shape(self.images[self.bestFocusIndex])
+            R,C = qu.np.shape(self.images[self.bestFocusIndex])
             deltaX = (float(self.xStepNum.GetValue())*(10**(-9)))
             if self.alphaFuncCbBox.GetSelection() is not 0:
-                alphaPar = bf.np.array([float(self.alphaNum.GetValue()),float(self.alphaNum2.GetValue())])
+                alphaPar = qu.np.array([float(self.alphaNum.GetValue()),float(self.alphaNum2.GetValue())])
             else:
-                alphaPar = bf.np.array([float(self.alphaNum.GetValue())])
+                alphaPar = qu.np.array([float(self.alphaNum.GetValue())])
         
             if self.algCbBox.GetSelection() == 0:
                 if dimRet:
@@ -512,16 +516,16 @@ class MainFrame(wx.Frame):
                     else:
                         phaseGuess = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample, onlyAguess = True)
                         temp, self.errList = qpm.AI(self.images,zN,deltaX,kN,phaseGuess,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
-                        self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
+                        self.res3Dimage = qu.adjustImgRange(temp,2**self.BitsPerSample-1).astype(qu.imgTypes[self.BitsPerSample])
                         pixelToRad = 1
                 else:
                     temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
-                    self.res3Dimage = bf.adjustImgRange(temp,2**self.BitsPerSample-1).astype(bf.imgTypes[self.BitsPerSample])
+                    self.res3Dimage = qu.adjustImgRange(temp,2**self.BitsPerSample-1).astype(qu.imgTypes[self.BitsPerSample])
                     pixelToRad = 1
         
             nS = float(self.nSampleNum.GetValue())
             nM = float(self.nMedNum.GetValue())
-            #self.radToHeight = qpm.lamD*(pixelToRad/(2*bf.np.pi))*(nS-nM)
+            #self.radToHeight = qpm.lamD*(pixelToRad/(2*qu.np.pi))*(nS-nM)
             self.radToHeight = pixelToRad/(qpm.kD*(nS-nM))
             myCursor= wx.StockCursor(wx.CURSOR_ARROW)
             self.SetCursor(myCursor)
@@ -533,17 +537,17 @@ class MainFrame(wx.Frame):
                           str(polyfitDer) + '\nWavelength: ' + self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
             if self.algCbBox.GetSelection() != 0:
                 comment = comment+str('\nMax iter num: ' + self.iterLimNum.GetValue() + '\nMaxError: ' + self.errLimNum.GetValue())
-            paramsSet = ([[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
-                          [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
-                          [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],
+            paramsSet = ([[(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
+                          [(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
+                          [(qu.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],
                           [path3D,''],
                           [path3D,''],
                           [path3D,comment]
                           ]
                          if self.BitsPerSample == 16 else
-                         [[(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
-                          [(bf.adjustImgRange(self.res3Dimage,255)).astype(bf.uint8)],
-                          [(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample])],
+                         [[(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
+                          [(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
+                          [(qu.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample])],
                           [path3D,''],
                           [path3D,''],
                           [path3D,comment]
@@ -557,17 +561,52 @@ class MainFrame(wx.Frame):
             
     
     def onCreateTestImg(self,event):
-        pass
-                    
-            
+        
+        numDialog = wx.TextEntryDialog(self,'How many images you want to generate?')
+        numDialog.ShowModal()
+        imgNum = int(numDialog.GetValue())
+        
+        distDialog = wx.TextEntryDialog(self,'Enter the distance in nm between the images')
+        distDialog.ShowModal()
+        dz = float(distDialog.GetValue())*(10**-9)
+        
+        pxDialog = wx.TextEntryDialog(self,'Enter the resolution in pixel (for X and Y) \nWARNING if the amount of pixel is not a multiple of 193, then it will ben modified in order to become one.')
+        pxDialog.ShowModal()
+        pxX = int(pxDialog.GetValue())
+        
+        bppDialog = wx.TextEntryDialog(self,'Enter the bit per pixel value')
+        bppDialog.ShowModal()
+        bpp = int(bppDialog.GetValue())
+        
+        lenDialog = wx.TextEntryDialog(self,'Enter the length of the image in nm (for X and Y)')
+        lenDialog.ShowModal()
+        lx = float(lenDialog.GetValue())*(10**-9)
+        
+        lamDialog = wx.TextEntryDialog(self,'Enter the wavelength in nm')
+        lamDialog.ShowModal()
+        lam = float(lamDialog.GetValue())*(10**-9)
+        
+        dirDialog = wx.DirDialog(self,"Select a directory for the generated files")
+        dirDialog.ShowModal()
+        dir_path = dirDialog.GetPath()
+        
+        print dir_path
+        
+        n = pxX/193
+        dx = lx/pxX
+        
+        #createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = '')
+        
+        qtest.createNstore(n,pxX,dx,dz,0.045,imgNum,lam,bpp,dir_path)
+        
     
     def drawMe(self,ind):
         
-        self.imgViewer.SetBitmap(wx.EmptyBitmap(bf.np.shape(self.images[ind])[0],bf.np.shape(self.images[ind])[1]))
+        self.imgViewer.SetBitmap(wx.EmptyBitmap(qu.np.shape(self.images[ind])[0],qu.np.shape(self.images[ind])[1]))
         
         
         if self.BitsPerSample == 16:
-            preTemp = bf.adjustImgRange(self.images[ind], 255.0)
+            preTemp = qu.adjustImgRange(self.images[ind], 255.0)
         else:
             preTemp = self.images[ind]
             
@@ -586,10 +625,10 @@ class MainFrame(wx.Frame):
     
     def reSize(self, img, maxDim):
         
-        Height = bf.np.shape(img)[0]
-        Width = bf.np.shape(img)[1]
+        Height = qu.np.shape(img)[0]
+        Width = qu.np.shape(img)[1]
         
-        convFact = float(maxDim)/bf.np.max(bf.np.array([Height,Width]))
+        convFact = float(maxDim)/qu.np.max(qu.np.array([Height,Width]))
         
         retImg = bf.sp.misc.imresize(img,(int(Height*convFact),int(Width*convFact)))
         
@@ -606,7 +645,7 @@ class MainFrame(wx.Frame):
         # dark pixels become much brighter, 
         # bright pixels become slightly bright
         newImage0 = (maxIntensity/phi)*(image/(maxIntensity/theta))**0.5
-        newImage0 = bf.np.array(newImage0,dtype=bf.np.uint8)
+        newImage0 = qu.np.array(newImage0,dtype=qu.np.uint8)
         
         return newImage0
                 
@@ -720,7 +759,7 @@ class MainFrame(wx.Frame):
     def __init__(self):
         wx.Frame.__init__(self, None, title = "QPM User Interface" , size=(1000, 830), style = wx.DEFAULT_FRAME_STYLE)# ^ wx.VSCROLL)#, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
         
-        sizeUnit = bf.np.array([80,21])
+        sizeUnit = qu.np.array([80,21])
         
         self.createMenu()
         s = self.createGrid()
