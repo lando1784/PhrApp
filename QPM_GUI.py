@@ -23,6 +23,7 @@ import time # di sistema
 from subprocess import Popen #di sistema
 from wx import Point
 import csv
+import datetime
 
 polyfitDer = False
 zCorr = True
@@ -80,6 +81,8 @@ class MainFrame(wx.Frame):
                 self.images.append(data)
                 self.currImgCbBox.Insert(path,cont)
                 cont+=1
+            
+            self.images = qu.np.array(self.images)
             self.currImgCbBox.SetSelection(0)
             self.imgSclBar.SetScrollbar(orientation = 0, position = 0, range = 1, thumbSize = len(self.imagePaths)-1)
             self.currImgNum.ChangeValue('1')
@@ -303,6 +306,7 @@ class MainFrame(wx.Frame):
         
         kN = (2 * qu.np.pi) / (float(self.lambdaNum.GetValue())*10**(-9))
         myCursor= wx.StockCursor(wx.CURSOR_WAIT)
+        print datetime.datetime.now()
         self.SetCursor(myCursor)
         self.degree = None
         self.errList = None
@@ -358,6 +362,7 @@ class MainFrame(wx.Frame):
         print self.radToHeight
         myCursor= wx.StockCursor(wx.CURSOR_ARROW)
         self.SetCursor(myCursor)
+        print datetime.datetime.now()
         
     
     def onSave3D(self, event):
@@ -593,6 +598,7 @@ class MainFrame(wx.Frame):
         print dir_path
         
         n = pxX/193
+        print n
         dx = lx/pxX
         
         #createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = '')

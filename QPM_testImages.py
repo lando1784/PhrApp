@@ -69,7 +69,7 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
 
 def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir):
     
-    images, phi = createIMGs(px*n,px*n,dX/n,dZ,b/n,imgNum,l)
+    images, phi = createIMGs(px,px,dX/n,dZ,b/n,imgNum,l)
     count = 0
     bits = bPp
     lenName = len(str(len(images)))
@@ -96,5 +96,5 @@ def createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir):
 if __name__== '__main__':
     
     n = float(sys.argv[1]) if len(sys.argv)>1 else 2
-    createNstore(n,193,5.182e-7,5e-3,0.045,21,632.8*10**-9,16,'')
+    createNstore(n,193*n,5.182e-7,5e-3,0.045,21,632.8*10**-9,16,'')
 

@@ -107,39 +107,40 @@ def ZaxisDerive(imgs, bestFocusInd):
     g= 3 if len(imgs) >3 else 2
     gc=g+1
     
-    Q=np.zeros([gc,gc])
+    Q=np.matrix(np.zeros([gc,gc]))
     
-    for r in range(0,gc):
-        for c in range(0,gc):
-            for k in range(0,N):
-                Q[r,c]+=(k-bestFocusInd)**(r+c)
+    Mr = np.matrix(np.arange(gc)).T * np.matrix(np.ones(gc))
+    Mc = Mr.T
     
-    Q=np.matrix(Q)
+    Mp = Mr+Mc
+    for k in range(0,N):
+        Q+=np.power(np.ones((gc,gc))*(k-bestFocusInd),Mp)
     
-    T = np.zeros([gc,N])
-    for r in range(0,gc):
-        for c in range(0,N):
-            T[r,c] = (c-bestFocusInd)**(r)
+    Mr = np.matrix(np.arange(gc)).T * np.matrix(np.ones(N))
+    T = np.matrix(np.zeros([gc,N]))
+    Mc = (np.matrix(np.arange(N)).T * np.matrix(np.ones(gc))).T
+    T = np.power(Mc-bestFocusInd,Mr)
 
     T=np.matrix(T)
-
     
     W=Q.I*T
-
     
     F = np.array(W[1,:])
-    
     
     V=np.zeros([N])
     Derivata=np.zeros([R,C])
     
-    for r in range(0,R):
-        for c in range(0,C):
-            for k in range(0,N):
-                V[k]=imgs[k][r,c]
-                
-            val=np.sum(F*V)
-            Derivata[r,c]=val
+    Fmat = (F*np.ones((C,R,N))).transpose()
+    
+    #for r in range(0,R):
+    #    for c in range(0,C):
+    #        V=imgs[:,r,c]
+    #        val=np.sum(F*V)
+    #        Derivata[r,c]=val
+    
+    BigDerivata = Fmat*imgs
+    
+    Derivata = np.sum(BigDerivata, 0)
     
     return Derivata
 
