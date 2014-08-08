@@ -54,7 +54,7 @@ class MainFrame(wx.Frame):
                 self.imagePaths = []
                 
                 for name in onlyfiles:
-                    self.imagePaths.append(altDir+'\\'+name)
+                    self.imagePaths.append(altDir+os.sep+name)
                            
             self.imagePaths.sort()
             self.images = []
@@ -66,6 +66,7 @@ class MainFrame(wx.Frame):
             self.imgInfo.tiff = self.imagePaths[0]
             self.currImgCbBox.SetSelection(0)
             for path in self.imagePaths:
+                print path
                 tempImg = bf.Image.open(path)
                 imgPreData = qu.np.array(tempImg.getdata())
                 if len(qu.np.shape(imgPreData)) > 1:

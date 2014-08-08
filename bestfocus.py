@@ -4,7 +4,7 @@ import platform
 if platform.system()=='Linux':
     from PIL import Image
 else:
-    import Image
+    from PIL import Image
     
 from PIL import ImageFilter as filt
     
