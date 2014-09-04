@@ -13,7 +13,7 @@ dxD = 7.98 * (10**-8)
 zeroSubst = 10**-9
 
 CTR = True
-        
+grad = False
 
 def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCorrD,imgBitsPerPixel=8):
     
@@ -117,6 +117,8 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     sumMul = IFFTmulX + IFFTmulY
     realSum = np.real(sumMul)
+    
+    gradPhi = np.real(divX+divY)
 
     if not onlyAguess:
         rSmax = np.max(realSum)
@@ -129,7 +131,9 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
         #rSnorm = ((realSum-rSmin)/(rSmax-rSmin)*float(rangeCorrector)).astype(int)
         rSnorm =adjustImgRange(realSum,rangeCorrector,imgBitsPerPixel)
     
-        return rSnorm, pixelToRad
+        gPnorm = adjustImgRange(gradPhi,rangeCorrector,imgBitsPerPixel) if grad else None
+        
+        return rSnorm, pixelToRad, gPnorm
     
     else:
         return realSum

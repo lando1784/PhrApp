@@ -311,6 +311,7 @@ class MainFrame(wx.Frame):
         self.SetCursor(myCursor)
         self.degree = None
         self.errList = None
+        self.gradPhi = None
         
         if polyfitDer and self.algCbBox.GetSelection() is not 1:
             degDef = 3 if len(self.images)>3 else len(self.images)-1
@@ -338,7 +339,7 @@ class MainFrame(wx.Frame):
         
         if self.algCbBox.GetSelection() == 0:
             if dimRet:
-                self.res3Dimage, pixelToRad = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
+                self.res3Dimage, pixelToRad, self.gradPhi = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
             else:
                 self.res3Dimage, pixelToRad = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
         else:
@@ -406,6 +407,11 @@ class MainFrame(wx.Frame):
         
         img = bf.Image.fromarray(*paramsSet[self.fileExtCbBox.GetSelection()])
         img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
+        
+        if self.gradPhi != None:
+            path3Dg = self.resImgDirTxt.GetValue()+os.sep+self.resImgFileNameTxt.GetValue()+'_grad'+self.fileExtCbBox.GetValue()
+            img2 = bf.Image.fromarray((qu.adjustImgRange(self.gradPhi,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample))
+            img2.save(path3Dg,description = comment)
             
         
     def onView3D(self, event):
@@ -512,7 +518,7 @@ class MainFrame(wx.Frame):
         
             if self.algCbBox.GetSelection() == 0:
                 if dimRet:
-                    self.res3Dimage, pixelToRad = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
+                    self.res3Dimage, pixelToRad, self.gradPhi = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
                 else:
                     self.res3Dimage, pixelToRad = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
             else:
@@ -564,6 +570,11 @@ class MainFrame(wx.Frame):
             #bf.sp.misc.imsave(*paramsSet[self.fileExtCbBox.GetSelection()])
             img = bf.Image.fromarray(*paramsSet[self.fileExtCbBox.GetSelection()])
             img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
+            
+            if self.gradPhi != None:
+                path3Dg = dir_path+os.sep+baseName+'_n-'+str(n)+'_img-'+str(scriptPackLen)+'_grad'+self.fileExtCbBox.GetValue()
+                img2 = bf.Image.fromarray((qu.adjustImgRange(self.gradPhi,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample))
+                img2.save(path3Dg,description = comment)
             
     
     def onCreateTestImg(self,event):
