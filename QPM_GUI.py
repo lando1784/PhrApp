@@ -637,16 +637,19 @@ class MainFrame(wx.Frame):
         try:
             self.imgViewer.SetBitmap(img2)
             self.p06.Layout()
+            self.Layout()
+            self.Refresh()
+            
         except Exception, e:
             print e
     
     
-    def reSize(self, img, maxDim):
+    def reSize(self, img, minDim):
         
         Height = qu.np.shape(img)[0]
         Width = qu.np.shape(img)[1]
         
-        convFact = float(maxDim)/qu.np.max(qu.np.array([Height,Width]))
+        convFact = float(minDim)/qu.np.min(qu.np.array([Height,Width]))
         
         retImg = bf.sp.misc.imresize(img,(int(Height*convFact),int(Width*convFact)))
         
