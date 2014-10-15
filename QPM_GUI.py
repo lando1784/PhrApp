@@ -24,6 +24,7 @@ from subprocess import Popen #di sistema
 from wx import Point
 import csv
 import datetime
+import reportDlg as rpdg
 
 polyfitDer = False
 zCorr = True
@@ -618,6 +619,12 @@ class MainFrame(wx.Frame):
         qtest.createNstore(n,pxX,dx,dz,0.045,imgNum,lam,bpp,dir_path)
         
     
+    def onReport(self, event):
+        
+        self.reportWin = rpdg.ReportEdit(self,'Write your report')
+        self.reportWin.Show()
+        
+    
     def drawMe(self,ind):
         
         self.imgViewer.SetBitmap(wx.EmptyBitmap(qu.np.shape(self.images[ind])[0],qu.np.shape(self.images[ind])[1]))
@@ -765,6 +772,8 @@ class MainFrame(wx.Frame):
         if pilot:
             self.openNd2Files = menuFile.Append(wx.ID_ANY, "Open &Nd2", "Open .nd2 files")
             self.Bind(wx.EVT_MENU, self.onOpenNd2, self.openNd2Files)
+        self.report = menuFile.Append(wx.ID_ANY, "&Write Report", "Write a brief report of your work")
+        self.Bind(wx.EVT_MENU, self.onReport, self.report)
         menuBar.Append(menuFile, "&File")
         
         menuScript = wx.Menu()
@@ -778,7 +787,7 @@ class MainFrame(wx.Frame):
         
 
     def __init__(self):
-        wx.Frame.__init__(self, None, title = "QPM User Interface" , size=(1000, 830), style = wx.DEFAULT_FRAME_STYLE)# ^ wx.VSCROLL)#, style=wx.DEFAULT_FRAME_STYLE ^ wx.RESIZE_BORDER)
+        wx.Frame.__init__(self, None, title = "QPM User Interface" , size=(1000, 830), style = wx.DEFAULT_FRAME_STYLE)
         
         sizeUnit = qu.np.array([80,21])
         
