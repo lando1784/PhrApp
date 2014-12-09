@@ -425,7 +425,8 @@ class MainFrame(wx.Frame):
         #bf.cv2.imshow('3D image',showME)
         x = qu.np.arange(qu.np.shape(showME)[0])
         y = qu.np.arange(qu.np.shape(showME)[1])
-        mlab.surf(x,y,qu.np.array(showME[:,:]))
+        mlab.surf(x,y,qu.np.array(showME[:,:]),warp_scale = 0.15)
+        mlab.savefig('d:\pippo.obj')
 
     
     def onStartScp(self,event):
