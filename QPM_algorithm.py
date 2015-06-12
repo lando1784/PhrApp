@@ -13,7 +13,7 @@ dxD = 7.98 * (10**-8)
 zeroSubst = 10**-9
 
 CTR = True
-grad = False
+grad = True
 
 def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCorrD,imgBitsPerPixel=8):
     

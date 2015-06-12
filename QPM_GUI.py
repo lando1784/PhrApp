@@ -34,6 +34,23 @@ if not polyfitDer:
     
 dimRet = True
 
+
+##################################################################################################
+######################################## VALORI DI DEFAULT #######################################
+
+defErrLim = '0.00001' # Valore di default per l'errore massimo dell'algoritmo iterativo
+defIterLim = '20' # Numero massimo di iterazioni per algoritmo iterativo
+defAlpha1 = '0.0001' # Fattore di correzione per limitare l'effetto delle basse frequenze (alto = frequenze basse molto filtrate; basso = frequenze basse meno filtrate)
+defAlpha2 = '0.0001' # Fattore di correzione secondario per limitare l'effetto delle basse frequenze (alto = frequenze basse molto filtrate; basso = frequenze basse meno filtrate)
+defZstep = '500' # Distanza tra due immagini consecutive in nanometri
+defImagRes = '441' # fattore di conversione da pixel a nanometri
+defSmRefInd = '1.367' # indice di rifrazione del campione
+defMedRefInd = '1.333' # indice di rifrazione del mezzo
+defWaveLn = '633' # lunghezza d'onda della luce incidente
+
+##################################################################################################
+
+
 class MainFrame(wx.Frame):
 
     def onOpen(self, event=None, altDir = None):
@@ -380,6 +397,11 @@ class MainFrame(wx.Frame):
                    str(polyfitDer) + '\nWavelength: ' + self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
         if self.algCbBox.GetSelection() != 0:
             comment = comment+str('\nMax iter num: ' + self.iterLimNum.GetValue() + '\nMaxError: ' + self.errLimNum.GetValue())
+            
+        print comment
+        
+        print self.BitsPerSample
+        
         paramsSet = ([[(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
                      [(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
                      [(qu.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],
@@ -411,7 +433,7 @@ class MainFrame(wx.Frame):
         
         if self.gradPhi != None:
             path3Dg = self.resImgDirTxt.GetValue()+os.sep+self.resImgFileNameTxt.GetValue()+'_grad'+self.fileExtCbBox.GetValue()
-            img2 = bf.Image.fromarray((qu.adjustImgRange(self.gradPhi,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample))
+            img2 = bf.Image.fromarray((qu.adjustImgRange(self.gradPhi,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]))#,('I;'+str(self.BitsPerSample)if ))
             img2.save(path3Dg,description = comment)
             
         
@@ -589,11 +611,17 @@ class MainFrame(wx.Frame):
         if warningDialog == 8: return False
         
         openFileDialog = wx.FileDialog(self, "Open", "", "", 
-                                       "TIFF files (*.tif)|*.tif|TIFF files (*.tiff)|*.tiff",
+                                       "TIFF files (*.tif)|*.tif|TIFF files (*.tiff)|*.tiff|BMP files (*.bmp)|*.bmp|BMP files (*.BMP)|*.BMP",
                                        wx.MULTIPLE | wx.FD_FILE_MUST_EXIST)
         openFileDialog.ShowModal()
         tomoImagePaths = openFileDialog.GetPaths()
         tomoImagePaths.sort()
+        #tifQ = tomoImagePaths[0].rfind('.bmp') == -1 and tomoImagePaths[0].rfind('.BMP') == -1
+        tifQ=False
+        
+        print tifQ
+        
+        extB = '.BMP' if tomoImagePaths[0].rfind('.bmp') == -1 else '.bmp'
         M = len(tomoImagePaths)
         tomoImagePaths = qu.np.array(tomoImagePaths)
         
@@ -604,7 +632,7 @@ class MainFrame(wx.Frame):
         m = int(dimDialog.GetValue())
         n = (m-m%2)/2
         
-        g = M-2*n
+        g = M-2*n if tifQ else int(M/m)
         
         dirDialog = wx.DirDialog(self,"Select a directory for the generated files")
         dirDialog.ShowModal()
@@ -618,13 +646,14 @@ class MainFrame(wx.Frame):
         for i in range(g):
             
             self.images = []
-            setInd = list(qu.np.arange(m)+i)
+            setInd = list(qu.np.arange(m)+i) if tifQ else list(qu.np.arange(m)+i*m)
             self.imagePaths = tomoImagePaths[setInd]
             
             print self.imagePaths
             
-            self.imgInfo = tc.TiffInfo()
-            self.imgInfo.tiff = self.imagePaths[0]
+            if tifQ:
+                self.imgInfo = tc.TiffInfo()
+                self.imgInfo.tiff = self.imagePaths[0]
             self.bestFocusIndex = n
             
             for path in self.imagePaths:
@@ -633,10 +662,14 @@ class MainFrame(wx.Frame):
                 if len(qu.np.shape(imgPreData)) > 1:
                     imgPreData = imgPreData[:,1]
                 data = imgPreData.reshape(tempImg.size[::-1])
-                if self.imgInfo.BitsPerSample == -1 or self.imgInfo.BitsPerSample == 0 or self.imgInfo.BitsPerSample > 32:
-                    self.BitsPerSample = 16
+                if tifQ:
+                    if (self.imgInfo.BitsPerSample == -1 or self.imgInfo.BitsPerSample == 0 or self.imgInfo.BitsPerSample > 32):
+                        self.BitsPerSample = 16
+                    elif tifQ:
+                        self.BitsPerSample = self.imgInfo.BitsPerSample
                 else:
-                    self.BitsPerSample = self.imgInfo.BitsPerSample
+                    self.BitsPerSample = 8
+                    
                 data = data.astype(qu.imgTypes[self.BitsPerSample])
                 self.images.append(data)
                 
@@ -694,7 +727,7 @@ class MainFrame(wx.Frame):
             myCursor= wx.StockCursor(wx.CURSOR_ARROW)
             self.SetCursor(myCursor)
               
-            path3D = dir_path+os.sep+baseName+'_n-'+str(i)+'_img-'+str(m)+self.fileExtCbBox.GetValue()
+            path3D = dir_path+os.sep+(baseName+'_n-'+str(i)+'_img-'+str(m)+self.fileExtCbBox.GetValue() if tifQ else (os.path.basename(self.imagePaths[n])).replace(extB,'.tif'))
             
             comment = str('Pixel to nm: ' + str(self.radToHeight) + '\ndX: ' + self.xStepNum.GetValue() + '\ndZ: ' + self.zStepNum.GetValue() + '\nnSample: ' + self.nSampleNum.GetValue() + '\nnMedium: ' + 
                           self.nMedNum.GetValue() + '\nAlpha function: ' + self.alphaFuncCbBox.GetValue() + '\nAlpha 1: ' + self.alphaNum.GetValue() + '\nAlpha 2: ' + self.alphaNum2.GetValue() + '\nImg num: ' + str(len(self.images)) + '\nFocus index: ' + str(self.bestFocusIndex) + '\nPolyFit Der: ' +
@@ -724,8 +757,8 @@ class MainFrame(wx.Frame):
             img.save(paramsSet[self.fileExtCbBox.GetSelection()+3][0],description = paramsSet[self.fileExtCbBox.GetSelection()+3][1])
             
             if self.gradPhi != None:
-                path3Dg = dir_path+os.sep+baseName+'_n-'+str(n)+'_img-'+str(m)+'_grad'+self.fileExtCbBox.GetValue()
-                img2 = bf.Image.fromarray((qu.adjustImgRange(self.gradPhi,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample))
+                path3Dg = os.path.splitext(path3D)[0]+'_grad'+self.fileExtCbBox.GetValue()
+                img2 = bf.Image.fromarray((qu.adjustImgRange(self.gradPhi,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]))#,'I;'+str(self.BitsPerSample))
                 img2.save(path3Dg,description = comment)                
             
     
@@ -958,8 +991,8 @@ class MainFrame(wx.Frame):
         self.algCbBox = wx.ComboBox(self.p00s1,size = tuple(sizeUnit*[3,1]),choices=['Standard QPM','Iterative Algorithm', 'IA + Std QPM'])
         cbBox00s1Sizer.Add(self.algCbBox,1,wx.ALIGN_CENTER_VERTICAL)
         
-        self.errLimNum,self.errLimLabel,num00s2Sizer = self.createNum(self.p00s2,'Max Error', sizeUnit, 1, 2, '0.00001')
-        self.iterLimNum,self.iterLimLabel,num00s3Sizer = self.createNum(self.p00s3,'Max Iterations num', sizeUnit, 1, 2, '20')
+        self.errLimNum,self.errLimLabel,num00s2Sizer = self.createNum(self.p00s2,'Max Error', sizeUnit, 1, 2, defErrLim)
+        self.iterLimNum,self.iterLimLabel,num00s3Sizer = self.createNum(self.p00s3,'Max Iterations num', sizeUnit, 1, 2, defIterLim)
 
         radio01Sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.radio1 = wx.RadioButton(self.p01,size = tuple((sizeUnit*[3,1])/[2,1]), label="Autoforcus", style=wx.RB_GROUP)
@@ -973,13 +1006,13 @@ class MainFrame(wx.Frame):
         self.alphaFuncCbBox = wx.ComboBox(self.p01s2,size = tuple(sizeUnit*[3,1]),choices=['alpha*k^2','alpha*k^2 + alpha2*k','alpha*exp[-alpha2*k]','alpha*k + alpha2','alpha*k^2 + alpha2'])
         cbBox01s2Sizer.Add(self.alphaFuncCbBox,1,wx.ALIGN_CENTER_VERTICAL)
         
-        self.alphaNum,self.alphaLabel,num01s3Sizer = self.createNum(self.p01s3,'Alpha factor', sizeUnit, 1, 2, '0.0001')        
-        self.alphaNum2,self.alphaLabel2,num02Sizer = self.createNum(self.p02,'Alpha factor 2', sizeUnit, 1, 2, '0.0001')
-        self.zStepNum,self.zStepLabel,num02a1Sizer = self.createNum(self.p02a1,'Z step [nm]', sizeUnit, 1, 2, '500')        
-        self.xStepNum,self.xStepLabel,num02a2Sizer = self.createNum(self.p02a2,'Image resolution [nm/px]', sizeUnit, 1, 2, '259')
-        self.nSampleNum,self.nSampleLabel,num02a3Sizer = self.createNum(self.p02a3,'Sample refractive index', sizeUnit, 1, 2, '1.367')        
-        self.nMedNum,self.nMedLabel,num02a4Sizer = self.createNum(self.p02a4,'Medium refractive index', sizeUnit, 1, 2, '1.333')        
-        self.lambdaNum,self.lambdaLabel,num02a5Sizer = self.createNum(self.p02a5,'Wavelength [nm]', sizeUnit, 1, 2, '633')
+        self.alphaNum,self.alphaLabel,num01s3Sizer = self.createNum(self.p01s3,'Alpha factor', sizeUnit, 1, 2, defAlpha1)    
+        self.alphaNum2,self.alphaLabel2,num02Sizer = self.createNum(self.p02,'Alpha factor 2', sizeUnit, 1, 2, defAlpha2)
+        self.zStepNum,self.zStepLabel,num02a1Sizer = self.createNum(self.p02a1,'Z step [nm]', sizeUnit, 1, 2, defZstep)        
+        self.xStepNum,self.xStepLabel,num02a2Sizer = self.createNum(self.p02a2,'Image resolution [nm/px]', sizeUnit, 1, 2, defImagRes)
+        self.nSampleNum,self.nSampleLabel,num02a3Sizer = self.createNum(self.p02a3,'Sample refractive index', sizeUnit, 1, 2, defSmRefInd)        
+        self.nMedNum,self.nMedLabel,num02a4Sizer = self.createNum(self.p02a4,'Medium refractive index', sizeUnit, 1, 2, defMedRefInd)        
+        self.lambdaNum,self.lambdaLabel,num02a5Sizer = self.createNum(self.p02a5,'Wavelength [nm]', sizeUnit, 1, 2, defWaveLn)
                 
         text03Sizer = wx.BoxSizer(wx.HORIZONTAL)
         self.resImgFileNameTxt = wx.TextCtrl(self.p03,size = tuple(sizeUnit*[2,1]))
