@@ -59,6 +59,9 @@ def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCo
     realSum = np.real(sumMul)
     rSmax = np.max(realSum)
     rSmin = np.min(realSum)
+    
+    print 'Max: '+str(rSmax)
+    print 'Min: '+str(rSmin)
 
     
     rangeCorrector = 2**imgBitsPerPixel-1
@@ -118,11 +121,18 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     sumMul = IFFTmulX + IFFTmulY
     realSum = np.real(sumMul)
     
+    ###################################################################################
+    realSum = (realSum + np.pi) % (2 * np.pi ) - np.pi
+    ###################################################################################
+    
     gradPhi = np.real(divX+divY)
-
+    
     if not onlyAguess:
         rSmax = np.max(realSum)
         rSmin = np.min(realSum)
+        
+        print 'Max: '+str(rSmax)
+        print 'Min: '+str(rSmin)
     
         rangeCorrector = 2**imgBitsPerPixel-1
     

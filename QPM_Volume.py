@@ -46,6 +46,11 @@ class QPM_Volume(object):
 
 if __name__=='__main__':
     
+    
+    print 'Not for Standalone use'
+    
+    '''
+    
     less = True
     
     paths = []
@@ -107,8 +112,4 @@ if __name__=='__main__':
         
         ciao += 1
     
-    print 'Not for Standalone use'
-    
-    
-    
-    
+    '''
