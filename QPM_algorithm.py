@@ -120,11 +120,7 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
     sumMul = IFFTmulX + IFFTmulY
     realSum = np.real(sumMul)
-    
-    ###################################################################################
-    realSum = (realSum + np.pi) % (2 * np.pi ) - np.pi
-    ###################################################################################
-    
+   
     gradPhi = np.real(divX+divY)
     
     if not onlyAguess:
@@ -143,7 +139,7 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
     
         gPnorm = adjustImgRange(gradPhi,rangeCorrector,imgBitsPerPixel) if grad else None
         
-        return rSnorm, pixelToRad, gPnorm
+        return rSnorm, pixelToRad, gPnorm, realSum, gradPhi
     
     else:
         return realSum

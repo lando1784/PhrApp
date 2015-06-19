@@ -357,7 +357,7 @@ class MainFrame(wx.Frame):
         
         if self.algCbBox.GetSelection() == 0:
             if dimRet:
-                self.res3Dimage, pixelToRad, self.gradPhi = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
+                self.res3Dimage, pixelToRad, self.gradPhi, self.phase, self.gphase = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
             else:
                 self.res3Dimage, pixelToRad = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
         else:
@@ -392,9 +392,12 @@ class MainFrame(wx.Frame):
         else:
             path3D = self.resImgDirTxt.GetValue()+'/'+self.resImgFileNameTxt.GetValue()+self.fileExtCbBox.GetValue()
             
-        comment = str('Pixel to nm: ' + str(self.radToHeight) + '\ndX: ' + self.xStepNum.GetValue() + '\ndZ: ' + self.zStepNum.GetValue() + '\nnSample: ' + self.nSampleNum.GetValue() + '\nnMedium: ' + 
-                   self.nMedNum.GetValue() + '\nAlpha function: ' + self.alphaFuncCbBox.GetValue() + '\nAlpha 1: ' + self.alphaNum.GetValue() + '\nAlpha 2: ' + self.alphaNum2.GetValue() + '\nImg num: ' + str(len(self.images)) + '\nFocus index: ' + str(self.bestFocusIndex) + '\nPolyFit Der: ' +
-                   str(polyfitDer) + '\nWavelength: ' + self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
+        comment = str('Max phase: '+str(qu.np.max(self.phase))+'\nMin phase: '+str(qu.np.min(self.phase))+'\nMax grad: '+str(qu.np.max(self.gphase))+'\nMin grad: '+str(qu.np.min(self.gphase))+
+                      '\nPixel to nm: ' + str(self.radToHeight) + '\ndX: ' + self.xStepNum.GetValue() + '\ndZ: ' + self.zStepNum.GetValue() + '\nnSample: ' + self.nSampleNum.GetValue() + 
+                      '\nnMedium: ' + self.nMedNum.GetValue() + '\nAlpha function: ' + self.alphaFuncCbBox.GetValue() + '\nAlpha 1: ' + self.alphaNum.GetValue() + '\nAlpha 2: ' + 
+                      self.alphaNum2.GetValue() + '\nImg num: ' + str(len(self.images)) + '\nFocus index: ' + str(self.bestFocusIndex) + '\nPolyFit Der: ' +str(polyfitDer) + '\nWavelength: ' + 
+                      self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
+        
         if self.algCbBox.GetSelection() != 0:
             comment = comment+str('\nMax iter num: ' + self.iterLimNum.GetValue() + '\nMaxError: ' + self.errLimNum.GetValue())
             
@@ -445,10 +448,14 @@ class MainFrame(wx.Frame):
         showME = qu.np.array(showME.getdata()).reshape(showME.size[::-1])
         showME = qu.adjustImgRange(showME,255,8)
         #bf.cv2.imshow('3D image',showME)
-        x = qu.np.arange(qu.np.shape(showME)[0])
-        y = qu.np.arange(qu.np.shape(showME)[1])
-        mlab.surf(x,y,qu.np.array(showME[:,:]),warp_scale = 0.15)
+        setX = qu.np.shape(showME)[0]/2
+        setY = qu.np.shape(showME)[1]/2
+        x = qu.np.arange(setX)
+        y = qu.np.arange(setY)
+        mlab.surf(x,y,self.phase[0:setX,0:setY],warp_scale = 0.15)
         mlab.savefig('d:\pippo.obj')
+        mlab.figure()
+        mlab.surf(x,y,self.gphase[0:setX,0:setY],warp_scale = 0.0001)
 
     
     def onStartScp(self,event):
@@ -703,7 +710,7 @@ class MainFrame(wx.Frame):
         
             if self.algCbBox.GetSelection() == 0:
                 if dimRet:
-                    self.res3Dimage, pixelToRad, self.gradPhi = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
+                    self.res3Dimage, pixelToRad, self.gradPhi, self.phase, self.gphase = qpm.phaseReconstr_v2(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
                 else:
                     self.res3Dimage, pixelToRad = qpm.phaseReconstr(zder,R,C,self.images[self.bestFocusIndex],fselect = self.alphaFuncCbBox.GetSelection(),k=kN,z=zN,dx=deltaX,alphaCorr=alphaPar,imgBitsPerPixel=self.BitsPerSample)
             else:
@@ -729,9 +736,12 @@ class MainFrame(wx.Frame):
               
             path3D = dir_path+os.sep+(baseName+'_n-'+str(i)+'_img-'+str(m)+self.fileExtCbBox.GetValue() if tifQ else (os.path.basename(self.imagePaths[n])).replace(extB,'.tif'))
             
-            comment = str('Pixel to nm: ' + str(self.radToHeight) + '\ndX: ' + self.xStepNum.GetValue() + '\ndZ: ' + self.zStepNum.GetValue() + '\nnSample: ' + self.nSampleNum.GetValue() + '\nnMedium: ' + 
-                          self.nMedNum.GetValue() + '\nAlpha function: ' + self.alphaFuncCbBox.GetValue() + '\nAlpha 1: ' + self.alphaNum.GetValue() + '\nAlpha 2: ' + self.alphaNum2.GetValue() + '\nImg num: ' + str(len(self.images)) + '\nFocus index: ' + str(self.bestFocusIndex) + '\nPolyFit Der: ' +
-                          str(polyfitDer) + '\nWavelength: ' + self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
+            comment = str('Max phase: '+str(qu.np.max(self.phase))+'\nMin phase: '+str(qu.np.min(self.phase))+'\nMax grad: '+str(qu.np.max(self.gphase))+'\nMin grad: '+str(qu.np.min(self.gphase))+
+                        '\nPixel to nm: ' + str(self.radToHeight) + '\ndX: ' + self.xStepNum.GetValue() + '\ndZ: ' + self.zStepNum.GetValue() + '\nnSample: ' + self.nSampleNum.GetValue() + 
+                        '\nnMedium: ' + self.nMedNum.GetValue() + '\nAlpha function: ' + self.alphaFuncCbBox.GetValue() + '\nAlpha 1: ' + self.alphaNum.GetValue() + '\nAlpha 2: ' + 
+                        self.alphaNum2.GetValue() + '\nImg num: ' + str(len(self.images)) + '\nFocus index: ' + str(self.bestFocusIndex) + '\nPolyFit Der: ' +str(polyfitDer) + '\nWavelength: ' + 
+                        self.lambdaNum.GetValue() + '\nPolynom deg: ' + str(self.degree) + '\nReal Z axis: ' + str(zCorr) + '\nCorrected dimensions: ' + str(dimRet))
+           
             if self.algCbBox.GetSelection() != 0:
                 comment = comment+str('\nMax iter num: ' + self.iterLimNum.GetValue() + '\nMaxError: ' + self.errLimNum.GetValue())
             paramsSet = ([[(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
