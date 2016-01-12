@@ -231,3 +231,6 @@ pip-log.txt
 *.tif
 *.jpg
 temp.jpg
+*.xml
+.idea/.name
+*.iml

@@ -50,7 +50,7 @@ def createIMGs(pxX,pxY,dx,dZ,b,imgN,l):
             #kpq[r,c] = kx[c]**2+ky[r]**2
             I[r,c]= 1.0-0.9*( gaussian(r,c,r1,c1,b) + gaussian(r,c,r2,c2,b)) 
             #I[r,c]= 1.0-0.9*(np.exp(-1*(b**2)*((c-c1)**2+(r-r1)**2))+np.exp(-1*(b**2)*((c-c2)**2+(r-r2)**2)))
-    print np.min(I)
+    print(np.min(I))
     I -= np.min(I)
     phi = 0.95*((2*np.pi/0.9)*(1.0-I)-np.pi)
     csi = np.sqrt(I)*(np.cos(phi)+1j*np.sin(phi))
@@ -77,12 +77,12 @@ if __name__== '__main__':
     
     for i in images:
         #i = adjustImgRange(i,2**(8)-1,8)
-        print np.max(i)
-        print np.min(i)
-        print np.mean(i)
-        print np.median(i)
+        print(np.max(i))
+        print(np.min(i))
+        print(np.mean(i))
+        print(np.median(i))
         i = bf.adjustImgRange(i,2**(bits)-200,bits)+150
-        print i.dtype
+        print(i.dtype)
         img = im.fromarray(i,'I;'+str(bits))#.astype(imgTypes[bits]))
         #		(bf.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(bf.imgTypes[self.BitsPerSample])
         img.save(str(count)+'.tif')

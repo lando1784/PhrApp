@@ -60,8 +60,8 @@ def phaseReconstr(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alphaCo
     rSmax = np.max(realSum)
     rSmin = np.min(realSum)
     
-    print 'Max: '+str(rSmax)
-    print 'Min: '+str(rSmin)
+    print('Max: '+str(rSmax))
+    print('Min: '+str(rSmin))
 
     
     rangeCorrector = 2**imgBitsPerPixel-1
@@ -127,8 +127,8 @@ def phaseReconstr_v2(ZaxisDer,R,C,Ifuoco,fselect,k=kD,z=zD,dx=dxD,alphaCorr=alph
         rSmax = np.max(realSum)
         rSmin = np.min(realSum)
         
-        print 'Max: '+str(rSmax)
-        print 'Min: '+str(rSmin)
+        print('Max: '+str(rSmax))
+        print('Min: '+str(rSmin))
     
         rangeCorrector = 2**imgBitsPerPixel-1
     
@@ -186,8 +186,6 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
     
     while err > errLim and currIter < iterLim:
         
-        print currIter
-        
         for ind in range(len(propList)-1):
             csiK = np.multiply(sqrtImgs[(N-1)/2],(np.cos(phiGuess) + np.sin(phiGuess)*1j)) # Mio
             delta = deltas[ind+1] # Mio
@@ -227,8 +225,7 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
         err = (1.0/(R*C))*float(np.sum(np.square(np.square(csiK.real)+np.square(csiK.imag)-images[propList[ind+1]])))
         
         errList.append(err)
-        
-        print err
+
         currIter += 1
     
     phiGuess = np.arctan2(csiK.imag,csiK.real)
@@ -238,7 +235,7 @@ def AI(images, dz = zD, dx = dxD, k=kD, initPhase = 'Test', errLim = 10**-6, ite
 
 if __name__== '__main__':
     
-    print 'Not for standalone use'
+    print('Not for standalone use')
     
     sys.exit(0)
     

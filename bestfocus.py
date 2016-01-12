@@ -38,9 +38,6 @@ def findBestFocus_histNsobel(imageFiles):
         res = mySobel(img,-1,mode='xy')
         imgS = res[2]
         histo = qu.np.histogram(imgS)
-        print qu.np.shape(histo)
-        print histo[0]
-        print histo[1]
         hStd = qu.np.std(histo[0])
         sumSarray.append(hStd)
         
@@ -62,8 +59,8 @@ def findBestFocus_diff(imageFiles):
                 tempData = qu.adjustImgRange(tempData,255,8)
                 img = Image.fromarray(tempData)
                 imgBlur = img.filter(filt.GaussianBlur(4))
-            except Exception, e:
-                print e.message
+            except Exception as e:
+                print(e)
                 imgBlur = img
         imgSharp = img.filter
         imgSharp = img.filter(filt.SHARPEN)
@@ -93,8 +90,8 @@ def findBestFocus_diffNsobel(imageFiles):
                 tempData = qu.adjustImgRange(tempData,255,8)
                 img = Image.fromarray(tempData)
                 imgBlur = img.filter(filt.GaussianBlur(4))
-            except Exception, e:
-                print e.message
+            except Exception as e:
+                print(e)
                 imgBlur = img
         imgSharp = img.filter(filt.SHARPEN)
         blurData = qu.np.array(imgBlur.getdata()).reshape(imgBlur.size[::-1])
@@ -302,6 +299,6 @@ def sgolay2d ( z, window_size, order=2, derivative=None):
 
 if __name__=='__main__':
     
-    print 'Not for Standalone use'
+    print('Not for Standalone use')
     
     sys.exit(0)

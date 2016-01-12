@@ -8,7 +8,7 @@ import QPM_testImages as qtest
 import bestfocus as bf # da progetto
 import sys # di sistema
 import tiffClass as tc #da progetto
-from mayavi import mlab #ok
+#from mayavi import mlab #ok
 import wx # ok
 import subprocess as subp # di sistema
 if qpm.platform.system() == 'Windows':
@@ -84,7 +84,7 @@ class MainFrame(wx.Frame):
             self.imgInfo.tiff = self.imagePaths[0]
             self.currImgCbBox.SetSelection(0)
             for path in self.imagePaths:
-                print path
+                print(path)
                 tempImg = bf.Image.open(path)
                 imgPreData = qu.np.array(tempImg.getdata())
                 if len(qu.np.shape(imgPreData)) > 1:
@@ -325,7 +325,7 @@ class MainFrame(wx.Frame):
         
         kN = (2 * qu.np.pi) / (float(self.lambdaNum.GetValue())*10**(-9))
         myCursor= wx.StockCursor(wx.CURSOR_WAIT)
-        print datetime.datetime.now()
+        print('Creation started at: {0}'.format(datetime.datetime.now()))
         self.SetCursor(myCursor)
         self.degree = None
         self.errList = None
@@ -373,16 +373,14 @@ class MainFrame(wx.Frame):
                 temp,self.errList = qpm.AI(self.images,zN,deltaX,kN,None,float(self.errLimNum.GetValue()),int(self.iterLimNum.GetValue()))
                 self.res3Dimage = qu.adjustImgRange(temp,2**self.BitsPerSample-1).astype(qu.imgTypes[self.BitsPerSample])
                 pixelToRad = 1
-        
-        print pixelToRad
+
         nS = float(self.nSampleNum.GetValue())
         nM = float(self.nMedNum.GetValue())
         #self.radToHeight = qpm.lamD*(pixelToRad/(2*qu.np.pi))*(nS-nM)
         self.radToHeight = pixelToRad/(kN*(nS-nM))
-        print self.radToHeight
         myCursor= wx.StockCursor(wx.CURSOR_ARROW)
         self.SetCursor(myCursor)
-        print datetime.datetime.now()
+        print('Creation ended at: {0}'.format(datetime.datetime.now()))
         
     
     def onSave3D(self, event):
@@ -400,11 +398,7 @@ class MainFrame(wx.Frame):
         
         if self.algCbBox.GetSelection() != 0:
             comment = comment+str('\nMax iter num: ' + self.iterLimNum.GetValue() + '\nMaxError: ' + self.errLimNum.GetValue())
-            
-        print comment
-        
-        print self.BitsPerSample
-        
+
         paramsSet = ([[(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
                      [(qu.adjustImgRange(self.res3Dimage,255)).astype(qu.uint8)],
                      [(qu.adjustImgRange(self.res3Dimage,2**(self.BitsPerSample)-1)).astype(qu.imgTypes[self.BitsPerSample]),'I;'+str(self.BitsPerSample)],
@@ -493,15 +487,11 @@ class MainFrame(wx.Frame):
         self.bestFocusIndex = (scriptPackLen-scriptPackLen%2)/2
         
         for n in qu.np.arange(((N-1)-(N-1)%(scriptPackLen-1))/(scriptPackLen-1))+1:
-            
-            print n
-            
+
             self.images = []
             setInd = list((qu.np.arange(scriptPackLen))*n+ctr-((scriptPackLen-scriptPackLen%2)/2)*n)
             self.imagePaths = scriptImagePaths[setInd]
-            
-            print self.imagePaths
-            
+
             self.imgInfo = tc.TiffInfo()
             self.imgInfo.tiff = self.imagePaths[0]
             self.zStepNum.SetValue(str(startStep*n))
@@ -625,9 +615,6 @@ class MainFrame(wx.Frame):
         tomoImagePaths.sort()
         #tifQ = tomoImagePaths[0].rfind('.bmp') == -1 and tomoImagePaths[0].rfind('.BMP') == -1
         tifQ=False
-        
-        print tifQ
-        
         extB = '.BMP' if tomoImagePaths[0].rfind('.bmp') == -1 else '.bmp'
         M = len(tomoImagePaths)
         tomoImagePaths = qu.np.array(tomoImagePaths)
@@ -655,9 +642,7 @@ class MainFrame(wx.Frame):
             self.images = []
             setInd = list(qu.np.arange(m)+i) if tifQ else list(qu.np.arange(m)+i*m)
             self.imagePaths = tomoImagePaths[setInd]
-            
-            print self.imagePaths
-            
+
             if tifQ:
                 self.imgInfo = tc.TiffInfo()
                 self.imgInfo.tiff = self.imagePaths[0]
@@ -801,11 +786,9 @@ class MainFrame(wx.Frame):
         dirDialog = wx.DirDialog(self,"Select a directory for the generated files")
         dirDialog.ShowModal()
         dir_path = dirDialog.GetPath()
-        
-        print dir_path
-        
+
         n = pxX/193
-        print n
+
         dx = lx/pxX
         
         #createNstore(n,px,dX,dZ,b,imgNum,l,bPp,dir = '')
@@ -841,8 +824,8 @@ class MainFrame(wx.Frame):
             self.Layout()
             self.Refresh()
             
-        except Exception, e:
-            print e
+        except Exception as e:
+            print(e)
     
     
     def reSize(self, img, minDim):
